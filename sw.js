@@ -1,70 +1,45 @@
-/**
- * sw.js — offline shell for MakerCode AI.
- *
- * The app shell is cached so the interface, saved projects and the offline
- * example work without a network. API calls are never cached.
- */
+/* Offline shell for MakerCode AI.
+   Bump CACHE whenever you deploy a change, so returning users get the new
+   files instead of the cached ones. */
+var CACHE = 'makercode-ai-v2';
 
-// Bump this string whenever you deploy a change, so returning users
-// get the new files instead of the cached ones.
-const CACHE = 'makercode-ai-v1';
+var SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg'];
 
-const SHELL = [
-  './',
-  './index.html',
-  './styles.css',
-  './app.js',
-  './config.js',
-  './gemini-service.js',
-  './socratic-engine.js',
-  './project-store.js',
-  './board-profiles.js',
-  './microbit-connection.js',
-  './manifest.webmanifest',
-  './icons/icon.svg'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
+self.addEventListener('install', function (e) {
+  e.waitUntil(
     caches.open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
-      .then(() => self.skipWaiting())
-      .catch(() => { /* a missing optional file must not block install */ })
+      .then(function (c) { return c.addAll(SHELL); })
+      .then(function () { return self.skipWaiting(); })
+      .catch(function () {})
   );
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (k) { return k === CACHE ? null : caches.delete(k); }));
+    }).then(function () { return self.clients.claim(); })
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  if (request.method !== 'GET') return;
+self.addEventListener('fetch', function (e) {
+  if (e.request.method !== 'GET') return;
+  var url = new URL(e.request.url);
 
-  const url = new URL(request.url);
+  /* Never cache the Gemini API or the editor CDN. */
+  if (url.hostname.indexOf('googleapis.com') !== -1 || url.hostname.indexOf('jsdelivr.net') !== -1) return;
+  if (url.origin !== self.location.origin) return;
 
-  // Never cache the Gemini API or the Monaco CDN.
-  if (url.hostname.endsWith('googleapis.com') || url.hostname.endsWith('jsdelivr.net')) return;
-
-  // Same-origin: cache first, then network, then refresh the cache.
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const fetching = fetch(request)
-          .then((response) => {
-            if (response.ok) {
-              const copy = response.clone();
-              caches.open(CACHE).then((cache) => cache.put(request, copy));
-            }
-            return response;
-          })
-          .catch(() => cached || caches.match('./index.html'));
-        return cached || fetching;
-      })
-    );
-  }
+  e.respondWith(
+    caches.match(e.request).then(function (cached) {
+      var live = fetch(e.request).then(function (res) {
+        if (res.ok) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+        }
+        return res;
+      }).catch(function () { return cached || caches.match('./index.html'); });
+      return cached || live;
+    })
+  );
 });

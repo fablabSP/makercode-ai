@@ -3,422 +3,3214 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="MakerCode AI helps learners plan, wire, code and debug Arduino, ESP32 and BBC micro:bit projects.">
-<meta name="theme-color" content="#0B1020">
+<meta name="description" content="MakerCode AI: an AI coding assistant for Arduino, ESP32, ESP8266 and BBC micro:bit. Bring your own Gemini API key.">
+<meta name="theme-color" content="#0B0E14">
 <title>MakerCode AI</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css">
+<style>
+/* ============================================================== tokens == */
+:root {
+  --bg:        #0B0E14;
+  --bg-deep:   #070910;
+  --panel:     #10141D;
+  --panel-2:   #151B27;
+  --panel-3:   #1D2534;
+  --line:      #232C3D;
+  --line-soft: #1A2130;
+
+  --text:      #E7ECF5;
+  --text-2:    #AEB9CF;
+  --muted:     #7C8AA6;
+
+  --blue:      #3B82F6;
+  --blue-soft: #1D4ED8;
+  --cyan:      #22D3EE;
+  --purple:    #A78BFA;
+
+  --ok:        #34D399;
+  --warn:      #FBBF24;
+  --err:       #F87171;
+
+  --ok-bg:   rgba(52,211,153,.12);
+  --warn-bg: rgba(251,191,36,.13);
+  --err-bg:  rgba(248,113,113,.13);
+  --info-bg: rgba(59,130,246,.12);
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  --sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+
+  --sidebar-w: 258px;
+  --editor-w: 400px;
+  --font-scale: 1;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: calc(15px * var(--font-scale));
+  line-height: 1.55;
+  overflow: hidden;
+}
+
+h1,h2,h3,h4 { margin: 0 0 .4em; line-height: 1.25; font-weight: 650; letter-spacing: -.01em; }
+h2 { font-size: 1rem; } h3 { font-size: .95rem; }
+p { margin: 0 0 .7em; }
+a { color: var(--blue); }
+a:hover { color: var(--cyan); }
+[hidden] { display: none !important; }
+.muted { color: var(--muted); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
+.skip-link {
+  position: absolute; left: 8px; top: -60px; z-index: 200;
+  background: var(--blue); color: #05070C; padding: 10px 16px;
+  border-radius: var(--r-md); font-weight: 600;
+}
+.skip-link:focus { top: 8px; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--panel-3); border-radius: 6px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: #2C374B; }
+
+/* ============================================================= buttons == */
+.btn {
+  font: inherit; font-weight: 600; font-size: .86rem;
+  color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 7px 13px; cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.btn:hover:not(:disabled) { background: var(--panel-3); border-color: #33405A; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: #04070E; }
+.btn.primary:hover:not(:disabled) { background: #5A97F8; border-color: #5A97F8; }
+.btn.ghost { background: transparent; }
+.btn.tiny { font-size: .78rem; padding: 4px 9px; border-radius: var(--r-sm); }
+.btn.wide { width: 100%; justify-content: center; }
+.btn.danger { color: var(--err); border-color: rgba(248,113,113,.4); }
+.btn.danger:hover:not(:disabled) { background: var(--err-bg); }
+.btn.icon { padding: 6px; }
+.btn.icon svg { width: 17px; height: 17px; display: block; }
+
+.row { display: flex; align-items: center; gap: 9px; }
+.row.wrap { flex-wrap: wrap; }
+.spacer { flex: 1 1 auto; }
+
+.inline-check { display: inline-flex; align-items: center; gap: 8px; font-size: .85rem; cursor: pointer; }
+.inline-check input { accent-color: var(--blue); width: 15px; height: 15px; }
+
+select, input[type=text], input[type=password], input[type=search], textarea {
+  font: inherit; color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 8px 10px; width: 100%;
+}
+select { cursor: pointer; }
+textarea { resize: vertical; font-family: inherit; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field-label { font-size: .74rem; color: var(--muted); font-weight: 650; }
+.field-help { font-size: .78rem; color: var(--muted); line-height: 1.45; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .72rem; font-weight: 650; white-space: nowrap;
+  padding: 3px 9px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel-2); color: var(--text-2);
+}
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.pill.ok   { color: var(--ok);   border-color: rgba(52,211,153,.42);  background: var(--ok-bg); }
+.pill.ok::before { background: var(--ok); }
+.pill.warn { color: var(--warn); border-color: rgba(251,191,36,.42);  background: var(--warn-bg); }
+.pill.warn::before { background: var(--warn); }
+.pill.err  { color: var(--err);  border-color: rgba(248,113,113,.42); background: var(--err-bg); }
+.pill.err::before { background: var(--err); }
+.pill.info { color: var(--blue); border-color: rgba(59,130,246,.42);  background: var(--info-bg); }
+.pill.info::before { background: var(--blue); }
+.pill.bare::before { display: none; }
+.pill.busy::before { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* ============================================================== shell === */
+.app { display: flex; height: 100%; }
+
+/* -------- sidebar */
+.sidebar {
+  width: var(--sidebar-w); flex: 0 0 auto;
+  background: var(--bg-deep); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.side-head { padding: 14px 14px 10px; }
+.brand { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+.brand svg { width: 22px; height: 22px; color: var(--blue); flex: 0 0 auto; }
+.brand-name { font-size: .8rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+.side-scroll { flex: 1 1 auto; overflow-y: auto; min-height: 0; padding: 0 10px; }
+.side-foot { padding: 10px; border-top: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 6px; }
+
+.side-label {
+  font-size: .66rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); padding: 14px 4px 6px; display: flex; align-items: center; gap: 6px;
+}
+.chat-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: var(--r-md); cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 3px;
+}
+.chat-item:hover { background: var(--panel); }
+.chat-item.active { background: var(--panel-2); border-color: var(--blue); }
+.chat-item-main { flex: 1 1 auto; min-width: 0; }
+.chat-item-name {
+  font-size: .84rem; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.chat-item-meta { font-size: .7rem; color: var(--muted); }
+.chat-item .btn.icon { opacity: 0; }
+.chat-item:hover .btn.icon, .chat-item.active .btn.icon { opacity: 1; }
+
+.file-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: var(--r-sm); cursor: pointer;
+  font-family: var(--mono); font-size: .78rem; margin-bottom: 2px;
+  border-left: 2px solid transparent;
+}
+.file-item:hover { background: var(--panel); }
+.file-item.active { background: rgba(52,211,153,.09); border-left-color: var(--ok); color: var(--ok); }
+
+/* -------- editor column */
+.editor-col {
+  width: var(--editor-w); flex: 0 0 auto;
+  background: var(--panel); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.editor-top {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-bottom: 1px solid var(--line-soft);
+}
+.editor-top h2 { margin: 0; font-size: .84rem; color: var(--text-2); }
+.board-chip {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 3px 9px; font-size: .78rem;
+  min-width: 0; max-width: 190px;
+}
+.board-chip svg { width: 18px; height: 14px; flex: 0 0 auto; }
+.board-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.file-tabs {
+  display: flex; gap: 2px; padding: 6px 8px 0;
+  border-bottom: 1px solid var(--line-soft); overflow-x: auto;
+}
+.file-tabs::-webkit-scrollbar { height: 0; }
+.file-tab {
+  font: inherit; font-family: var(--mono); font-size: .76rem;
+  background: transparent; color: var(--muted);
+  border: 1px solid transparent; border-bottom: none;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  padding: 6px 10px; cursor: pointer; display: flex; align-items: center; gap: 7px;
+  white-space: nowrap;
+}
+.file-tab.active { background: var(--panel-2); color: var(--text); border-color: var(--line); }
+.file-tab .x { opacity: .5; font-family: var(--sans); }
+.file-tab .x:hover { opacity: 1; color: var(--err); }
+
+.editor-tools {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  padding: 8px 10px; border-bottom: 1px solid var(--line-soft);
+  background: var(--panel-2);
+}
+.editor-shell { flex: 1 1 auto; min-height: 0; position: relative; background: var(--bg-deep); }
+#monaco-host { position: absolute; inset: 0; }
+#code-area {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  background: var(--bg-deep); color: #D3E1FA; border: 0; border-radius: 0;
+  font-family: var(--mono); font-size: .84rem; line-height: 1.65;
+  padding: 12px 14px; resize: none; tab-size: 2;
+}
+.editor-status {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 7px 11px; border-top: 1px solid var(--line-soft);
+  background: var(--panel-2); font-size: .74rem; color: var(--muted);
+}
+
+/* -------- chat column */
+.chat-col { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; position: relative; }
+.chat-scroll { flex: 1 1 auto; overflow-y: auto; padding: 26px 30px 10px; min-height: 0; }
+.chat-inner { max-width: 860px; margin: 0 auto; }
+
+.hero { text-align: center; padding: 40px 10px 30px; }
+.hero h1 {
+  font-size: clamp(1.15rem, 2.1vw, 1.7rem); font-weight: 750;
+  letter-spacing: .01em; text-transform: uppercase; margin-bottom: 14px;
+}
+.hero p { color: var(--text-2); max-width: 62ch; margin: 0 auto 8px; font-size: .95rem; }
+
+.starters { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 22px; }
+.starter {
+  font: inherit; font-size: .8rem; cursor: pointer;
+  background: var(--panel); color: var(--text-2);
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px;
+}
+.starter:hover { border-color: var(--blue); color: var(--text); background: var(--panel-2); }
+
+.msg { margin-bottom: 16px; display: flex; flex-direction: column; gap: 5px; }
+.msg-role { font-size: .66rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.msg-body { padding: 11px 15px; border-radius: var(--r-lg); font-size: .92rem; overflow-wrap: anywhere; }
+.msg.user { align-items: flex-end; }
+.msg.user .msg-body {
+  background: var(--info-bg); border: 1px solid rgba(59,130,246,.35);
+  border-bottom-right-radius: var(--r-sm); max-width: 78%;
+}
+.msg.assistant .msg-body {
+  background: var(--panel); border: 1px solid var(--line);
+  border-bottom-left-radius: var(--r-sm);
+}
+.msg.system .msg-body {
+  background: transparent; border: 1px dashed var(--line);
+  color: var(--text-2); font-size: .85rem;
+}
+.msg.error .msg-body { background: var(--err-bg); border-color: rgba(248,113,113,.45); }
+.msg-body p:last-child { margin-bottom: 0; }
+.msg-q {
+  margin-top: 10px; padding: 10px 13px;
+  background: rgba(34,211,238,.08); border-left: 3px solid var(--cyan);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0; font-weight: 600;
+}
+.msg-img { max-width: 190px; border-radius: var(--r-md); border: 1px solid var(--line); display: block; margin-bottom: 8px; }
+.typing { display: inline-flex; gap: 4px; padding: 3px 0; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: bounce 1.1s infinite; }
+.typing i:nth-child(2){animation-delay:.15s} .typing i:nth-child(3){animation-delay:.3s}
+@keyframes bounce { 0%,80%,100%{opacity:.25;transform:translateY(0)} 40%{opacity:1;transform:translateY(-4px)} }
+
+/* -------- guided controls */
+.guide-bar {
+  max-width: 860px; margin: 0 auto 14px;
+  background: linear-gradient(180deg, rgba(34,211,238,.06), transparent);
+  border: 1px solid var(--line); border-radius: var(--r-lg); padding: 11px 13px;
+}
+.guide-top { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.guide-step { font-size: .74rem; font-weight: 700; color: var(--cyan); }
+.track { flex: 1 1 auto; height: 4px; border-radius: 999px; background: var(--panel-3); overflow: hidden; }
+.track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--purple)); transition: width .25s; }
+.guide-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* -------- composer */
+.composer-wrap { flex: 0 0 auto; padding: 10px 30px 16px; border-top: 1px solid var(--line-soft); background: var(--bg); }
+.composer { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 9px; }
+.composer-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.modes { display: flex; gap: 3px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md); padding: 3px; }
+.mode {
+  font: inherit; font-size: .8rem; font-weight: 650; cursor: pointer;
+  background: transparent; color: var(--muted); border: 0;
+  border-radius: var(--r-sm); padding: 4px 13px;
+}
+.mode:hover { color: var(--text-2); }
+.mode.active { background: var(--blue); color: #04070E; }
+
+.tool-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.model-row { display: flex; align-items: center; gap: 8px; font-size: .76rem; color: var(--muted); }
+.model-row select { width: auto; padding: 4px 8px; font-size: .78rem; }
+
+.input-row {
+  display: flex; align-items: flex-end; gap: 8px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: 8px 8px 8px 10px;
+}
+.input-row:focus-within { border-color: var(--blue); }
+#msg-input {
+  flex: 1 1 auto; background: transparent; border: 0; padding: 6px 2px;
+  min-height: 26px; max-height: 190px; resize: none;
+}
+#msg-input:focus { outline: none; }
+
+.attach { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
+.attach img { width: 54px; height: 54px; object-fit: cover; border-radius: var(--r-sm); }
+
+/* -------- drawer */
+.drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 400px; max-width: 92vw;
+  background: var(--panel); border-left: 1px solid var(--line);
+  display: flex; flex-direction: column; z-index: 40;
+  transform: translateX(100%); transition: transform .2s ease; visibility: hidden;
+}
+.drawer.open { transform: translateX(0); visibility: visible; }
+.drawer-head { display: flex; gap: 2px; padding: 8px 8px 0; border-bottom: 1px solid var(--line-soft); overflow-x: auto; }
+.drawer-tab {
+  font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer;
+  background: transparent; color: var(--muted); border: 1px solid transparent; border-bottom: 0;
+  border-radius: var(--r-sm) var(--r-sm) 0 0; padding: 7px 12px; white-space: nowrap; position: relative;
+}
+.drawer-tab.active { background: var(--panel-2); color: var(--text); border-color: var(--line); }
+.drawer-tab[data-badge]::after {
+  content: attr(data-badge); position: absolute; top: 2px; right: 2px;
+  background: var(--warn); color: #100C02; font-size: .58rem; font-weight: 750;
+  border-radius: 999px; padding: 0 4px;
+}
+.drawer-close { position: absolute; top: 8px; right: 8px; z-index: 2; }
+.drawer-body { flex: 1 1 auto; overflow-y: auto; padding: 16px; min-height: 0; }
+.drawer-view { display: none; } .drawer-view.active { display: block; }
+
+/* -------- content blocks */
+.block { margin-bottom: 20px; }
+.block-head {
+  display: flex; align-items: baseline; gap: 9px; margin-bottom: 9px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--line-soft);
+}
+.block-head h3 { margin: 0; }
+.block-count { font-size: .72rem; color: var(--muted); font-family: var(--mono); }
+
+ol.steps { margin: 0; padding-left: 0; list-style: none; counter-reset: s; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 32px; margin-bottom: 9px; font-size: .88rem; }
+ol.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: 1px;
+  width: 21px; height: 21px; border-radius: 50%; display: grid; place-items: center;
+  font-size: .68rem; font-weight: 750; font-family: var(--mono);
+  background: var(--panel-3); color: var(--cyan); border: 1px solid var(--line);
+}
+ul.dots { margin: 0; padding-left: 0; list-style: none; }
+ul.dots li { position: relative; padding-left: 20px; margin-bottom: 7px; font-size: .88rem; }
+ul.dots li::before { content:""; position: absolute; left: 4px; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); }
+
+.callout { border-radius: var(--r-md); padding: 11px 13px; margin-bottom: 11px; border: 1px solid var(--line); background: var(--panel-2); font-size: .87rem; }
+.callout.warn { background: var(--warn-bg); border-color: rgba(251,191,36,.4); }
+.callout.err  { background: var(--err-bg);  border-color: rgba(248,113,113,.45); }
+.callout.ok   { background: var(--ok-bg);   border-color: rgba(52,211,153,.4); }
+.callout.info { background: var(--info-bg); border-color: rgba(59,130,246,.4); }
+.callout-title { font-weight: 700; margin-bottom: 4px; display: flex; gap: 7px; }
+.callout-title::before { content: attr(data-icon); font-family: var(--mono); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); }
+table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+th { background: var(--panel-2); font-size: .7rem; color: var(--muted); font-weight: 750; text-transform: uppercase; letter-spacing: .05em; }
+tbody tr:last-child td { border-bottom: 0; }
+
+.pin-tag {
+  display: inline-block; font-family: var(--mono); font-size: .76rem; font-weight: 700;
+  padding: 2px 7px; border-radius: var(--r-sm);
+  background: var(--panel-3); border: 1px solid var(--line); color: var(--cyan);
+}
+.pin-tag.bad { color: var(--err); border-color: var(--err); background: var(--err-bg); }
+.pin-row { display: flex; gap: 9px; padding: 7px 0; border-bottom: 1px dashed var(--line-soft); }
+.pin-row:last-child { border-bottom: 0; }
+.pin-row-main { flex: 1 1 auto; min-width: 0; }
+.pin-row-name { font-weight: 600; font-size: .86rem; }
+.pin-row-note { color: var(--muted); font-size: .76rem; }
+
+.wire { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 9px; padding: 9px 11px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-md); margin-bottom: 8px; }
+.wire-end { font-size: .83rem; min-width: 0; }
+.wire-end.r { text-align: right; }
+.wire-sub { color: var(--muted); font-size: .74rem; }
+.wire-link { width: 46px; height: 2px; background: var(--cyan); position: relative; border-radius: 999px; }
+.wire-link::before, .wire-link::after { content:""; position: absolute; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); }
+.wire-link::before { left: -2px; } .wire-link::after { right: -2px; }
+.wire.power .wire-link, .wire.power .wire-link::before, .wire.power .wire-link::after { background: var(--err); }
+.wire.ground .wire-link, .wire.ground .wire-link::before, .wire.ground .wire-link::after { background: var(--muted); }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: .83rem; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-family: var(--mono); font-size: .8rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-size: .72rem; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); color: var(--text-2); }
+
+.serial-out {
+  height: 340px; overflow-y: auto; background: var(--bg-deep);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  font-family: var(--mono); font-size: .78rem; line-height: 1.6; padding: 10px 12px; margin-bottom: 10px;
+}
+.serial-line { display: flex; gap: 10px; }
+.serial-time { color: var(--muted); flex: 0 0 auto; }
+.serial-text { color: #C4D9FA; overflow-wrap: anywhere; }
+.serial-line.sent .serial-text { color: var(--purple); }
+
+/* ============================================================= dialogs == */
+dialog {
+  border: 1px solid var(--line); border-radius: var(--r-xl);
+  background: var(--panel); color: var(--text); padding: 0;
+  max-width: 620px; width: calc(100% - 28px);
+  box-shadow: 0 26px 70px rgba(0,0,0,.62);
+}
+dialog::backdrop { background: rgba(4,6,12,.76); }
+.dlg-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; max-height: 86vh; overflow-y: auto; }
+.dlg-body h2 { font-size: 1.1rem; }
+.dlg-body h3 { color: var(--cyan); margin-top: 4px; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 4px 0 0; padding: 0; }
+fieldset { border: 1px solid var(--line); border-radius: var(--r-md); padding: 13px; display: flex; flex-direction: column; gap: 11px; margin: 0; }
+legend { padding: 0 6px; font-size: .74rem; color: var(--muted); font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
+.note { font-size: .8rem; color: var(--warn); background: var(--warn-bg); border: 1px solid rgba(251,191,36,.34); border-radius: var(--r-sm); padding: 8px 11px; margin: 0; }
+
+/* -------- onboarding / board picker */
+#dlg-onboard { max-width: 680px; }
+.ob-head { text-align: center; padding: 26px 24px 6px; }
+.ob-head .glyph { width: 46px; height: 46px; color: var(--blue); margin: 0 auto 12px; display: block; }
+.ob-head h2 { font-size: 1.45rem; margin-bottom: 8px; }
+.ob-head p { color: var(--muted); font-size: .9rem; max-width: 46ch; margin: 0 auto; }
+.ob-scroll { max-height: 54vh; overflow-y: auto; padding: 16px 24px; }
+.ob-foot { padding: 14px 24px 20px; border-top: 1px solid var(--line-soft); }
+
+.ob-group { font-size: .68rem; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; color: var(--muted); margin: 16px 0 9px; }
+.ob-group:first-child { margin-top: 0; }
+.board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 11px; }
+.board-card {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: 13px 10px 11px; cursor: pointer; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  font: inherit; color: var(--text); transition: border-color .12s, background .12s;
+}
+.board-card:hover { border-color: #33405A; background: var(--panel-3); }
+.board-card.sel { border-color: var(--blue); background: rgba(59,130,246,.12); }
+.board-card svg { width: 74px; height: 52px; }
+.board-card b { font-size: .8rem; font-weight: 650; line-height: 1.3; }
+.board-card small { font-size: .7rem; color: var(--muted); }
+
+.step-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+.step-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--panel-3); }
+.step-dots i.on { background: var(--blue); }
+
+/* ============================================================== toast === */
+#toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  background: var(--panel-3); border: 1px solid var(--blue); color: var(--text);
+  padding: 10px 17px; border-radius: var(--r-lg); font-size: .86rem; font-weight: 600;
+  z-index: 300; box-shadow: 0 12px 34px rgba(0,0,0,.5); max-width: min(90vw, 460px);
+}
+#toast.err { border-color: var(--err); color: var(--err); }
+#toast.ok { border-color: var(--ok); color: var(--ok); }
+
+.mobile-tabs { display: none; }
+
+/* =========================================================== responsive = */
+@media (max-width: 1240px) { :root { --editor-w: 340px; --sidebar-w: 226px; } }
+
+@media (max-width: 1000px) {
+  .app { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; max-height: 44vh; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar.collapsed .side-scroll, .sidebar.collapsed .side-foot { display: none; }
+  .editor-col { width: 100%; border-right: 0; }
+  .mobile-tabs {
+    display: flex; gap: 3px; padding: 7px 10px; background: var(--bg-deep);
+    border-bottom: 1px solid var(--line);
+  }
+  .mobile-tabs .mode { flex: 1 1 auto; text-align: center; }
+  .pane { display: none; } .pane.shown { display: flex; }
+  .chat-scroll { padding: 18px 14px 8px; }
+  .composer-wrap { padding: 10px 14px 14px; }
+  .drawer { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after {
+  animation-duration: .001ms !important; transition-duration: .001ms !important;
+}
+@media (prefers-contrast: more) { :root { --line: #3D4A64; --muted: #A2AFC8; } }
+</style>
 </head>
 <body>
-<a class="skip-link" href="#workspace">Skip to workspace</a>
+<a class="skip-link" href="#msg-input">Skip to the message box</a>
 
-<!-- ───────────────────────────────────────────────────────── top bar ── -->
-<header class="topbar">
-  <div class="brand">
-    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="currentColor" stroke-width="2"/>
-      <circle cx="11" cy="11" r="2.4" fill="currentColor"/>
-      <circle cx="21" cy="11" r="2.4" fill="currentColor"/>
-      <path d="M10 20c2.6 2.6 9.4 2.6 12 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    <span class="brand-name">MakerCode<span class="brand-ai">AI</span></span>
-  </div>
+<div class="app">
 
-  <div class="topbar-controls">
-    <label class="field compact">
-      <span class="field-label">Board</span>
-      <select id="board-select" aria-label="Select your board"></select>
-    </label>
-
-    <label class="field compact">
-      <span class="field-label">Language</span>
-      <select id="language-select" aria-label="Select the programming language"></select>
-    </label>
-
-    <label class="field compact">
-      <span class="field-label">Level</span>
-      <select id="level-select" aria-label="Select the learner level">
-        <option value="beginner">Beginner</option>
-        <option value="intermediate">Intermediate</option>
-        <option value="advanced">Advanced</option>
-      </select>
-    </label>
-
-    <div class="socratic-toggle">
-      <input type="checkbox" id="socratic-toggle" class="switch-input">
-      <label for="socratic-toggle" class="switch">
-        <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
-        <span class="switch-text">Socratic Mode</span>
-      </label>
-      <span id="socratic-state" class="switch-state" aria-live="polite">off</span>
-    </div>
-  </div>
-
-  <div class="topbar-actions">
-    <button type="button" class="btn ghost" id="btn-new">New</button>
-    <button type="button" class="btn ghost" id="btn-open">Open</button>
-    <button type="button" class="btn" id="btn-save">Save project</button>
-    <button type="button" class="btn icon-btn" id="btn-settings" aria-label="Settings" title="Settings">
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14 2h-4l-.5 2.6A7.6 7.6 0 0 0 6.9 6.1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5L10 22h4l.5-2.6a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-    </button>
-    <button type="button" class="btn icon-btn" id="btn-help" aria-label="Help" title="Help">
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.7v.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
-    </button>
-  </div>
-</header>
-
-<!-- key status strip, always visible -->
-<div class="statusbar" id="statusbar">
-  <span class="chip" id="chip-board">micro:bit V2</span>
-  <span class="chip" id="chip-mode" data-mode="direct">Direct mode</span>
-  <span class="chip warn" id="chip-compile">Not yet compiled</span>
-  <span class="chip" id="chip-connection" data-state="disconnected">Board disconnected</span>
-  <span class="chip" id="chip-key" data-state="missing">No API key</span>
-  <span class="statusbar-spacer"></span>
-  <span class="chip quiet" id="chip-project">Untitled project</span>
-</div>
-
-<main class="layout">
-
-  <!-- ────────────────────────────────────────────────────── left panel ── -->
-  <section class="panel panel-left" aria-label="AI assistant">
-    <div class="panel-head">
-      <h2>Assistant</h2>
-      <button type="button" class="btn tiny ghost" id="btn-clear-chat">Clear chat</button>
+  <!-- ══════════════════════════════════════════════════════════ sidebar ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="4" y="4" width="24" height="24" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
+          <circle cx="12" cy="13" r="2.2" fill="currentColor"/>
+          <circle cx="20" cy="13" r="2.2" fill="currentColor"/>
+          <path d="M11 20c2.6 2.4 8.4 2.4 11 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 11H1M4 16H1M4 21H1M31 11h-3M31 16h-3M31 21h-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-name">MakerCode AI</span>
+      </div>
+      <button type="button" class="btn primary wide" id="btn-new-chat">+ New chat</button>
     </div>
 
-    <div class="chat" id="chat" role="log" aria-live="polite" aria-label="Conversation with the assistant"></div>
+    <div class="side-scroll">
+      <label class="sr-only" for="search-chats">Search your chats</label>
+      <input type="search" id="search-chats" placeholder="Search chats..." autocomplete="off">
 
-    <div class="socratic-controls" id="socratic-controls" hidden>
-      <div class="socratic-progress">
-        <span id="socratic-step-label">Step 1 of 10 — Trigger</span>
-        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Socratic progress">
-          <div class="progress-fill" id="socratic-progress-fill"></div>
-        </div>
-      </div>
-      <div class="socratic-buttons">
-        <button type="button" class="btn tiny" data-socratic="hint">Give me a hint</button>
-        <button type="button" class="btn tiny" data-socratic="explain">Explain this concept</button>
-        <button type="button" class="btn tiny" data-socratic="check">Check my thinking</button>
-        <button type="button" class="btn tiny" data-socratic="step">Show one step</button>
-        <button type="button" class="btn tiny warnish" data-socratic="solution">Show solution</button>
-        <button type="button" class="btn tiny" data-socratic="similar">Try a similar challenge</button>
-      </div>
+      <div class="side-label">Chats</div>
+      <div id="chat-list"></div>
+
+      <div class="side-label">Project files</div>
+      <div id="file-list"></div>
     </div>
 
-    <div class="suggestions" id="suggestions" aria-label="Prompt suggestions"></div>
-
-    <form class="composer" id="composer">
-      <div class="attachment" id="attachment" hidden>
-        <img id="attachment-preview" alt="Preview of the image you are about to send">
-        <div class="attachment-meta">
-          <span id="attachment-name">image</span>
-          <button type="button" class="btn tiny ghost" id="btn-remove-image">Remove</button>
-        </div>
+    <div class="side-foot">
+      <div class="row" style="justify-content:space-between">
+        <span class="pill bare" id="pill-key">No API key</span>
+        <span class="pill bare" id="pill-serial">Not connected</span>
       </div>
-
-      <label class="sr-only" for="prompt">Describe what you want to build</label>
-      <textarea id="prompt" rows="3" placeholder="Describe what you want to build, or ask a question about your circuit."></textarea>
-
-      <div class="composer-row">
-        <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp"
-               class="sr-only" tabindex="-1" aria-label="Choose an image of your circuit or code">
-        <button type="button" class="btn tiny ghost" id="btn-upload">Add image</button>
-        <button type="button" class="btn tiny ghost" id="btn-requirements">Requirements</button>
-        <button type="button" class="btn tiny ghost" id="btn-paste-serial">Paste serial</button>
-        <span class="composer-spacer"></span>
-        <button type="submit" class="btn primary" id="btn-send">Send</button>
+      <div class="row">
+        <button type="button" class="btn tiny ghost" id="btn-settings" style="flex:1">Settings</button>
+        <button type="button" class="btn tiny ghost" id="btn-help" style="flex:1">Help</button>
       </div>
-    </form>
+    </div>
+  </aside>
+
+  <!-- pane switcher, small screens only -->
+  <div class="mobile-tabs" role="tablist" aria-label="Switch pane">
+    <button type="button" class="mode active" data-pane="chat">Chat</button>
+    <button type="button" class="mode" data-pane="editor">Code</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ editor ══ -->
+  <section class="editor-col pane" id="pane-editor" aria-label="Code">
+    <div class="editor-top">
+      <h2>Code</h2>
+      <div class="board-chip" id="board-chip" title="Selected board">
+        <span id="board-chip-name">No board</span>
+      </div>
+      <span class="spacer"></span>
+      <button type="button" class="btn tiny ghost" id="btn-change-board">Change</button>
+    </div>
+
+    <div class="file-tabs" id="file-tabs"></div>
+
+    <div class="editor-tools">
+      <button type="button" class="btn tiny" data-code="copy">Copy</button>
+      <button type="button" class="btn tiny" data-code="download">Download</button>
+      <button type="button" class="btn tiny ghost" data-code="add">Add file</button>
+      <button type="button" class="btn tiny ghost" data-code="rules">Rules</button>
+      <button type="button" class="btn tiny ghost" data-code="explain">Explain</button>
+      <button type="button" class="btn tiny ghost" data-code="findError">Find an error</button>
+      <button type="button" class="btn tiny ghost" data-code="improve">Improve</button>
+      <a class="btn tiny ghost" id="link-editor" href="https://makecode.microbit.org/" target="_blank" rel="noopener">Open editor</a>
+    </div>
+
+    <div class="editor-shell">
+      <div id="monaco-host" hidden></div>
+      <label class="sr-only" for="code-area">Generated code</label>
+      <textarea id="code-area" spellcheck="false" placeholder="Generated code appears here. Nothing is compiled in this app."></textarea>
+    </div>
+
+    <div class="editor-status">
+      <span class="pill warn bare" id="pill-compile">Not compiled</span>
+      <span id="editor-note">Plain text editor</span>
+    </div>
   </section>
 
-  <!-- ───────────────────────────────────────────────────── centre pane ── -->
-  <section class="panel panel-centre" id="workspace" aria-label="Project workspace">
-    <div class="tabs" role="tablist" aria-label="Workspace views">
-      <button role="tab" id="tab-plan" aria-controls="view-plan" aria-selected="true" class="tab active">Plan</button>
-      <button role="tab" id="tab-code" aria-controls="view-code" aria-selected="false" class="tab" tabindex="-1">Code</button>
-      <button role="tab" id="tab-diagram" aria-controls="view-diagram" aria-selected="false" class="tab" tabindex="-1">Diagram</button>
-      <button role="tab" id="tab-parts" aria-controls="view-parts" aria-selected="false" class="tab" tabindex="-1">Parts</button>
-      <button role="tab" id="tab-simulator" aria-controls="view-simulator" aria-selected="false" class="tab" tabindex="-1">Simulator</button>
-      <button role="tab" id="tab-serial" aria-controls="view-serial" aria-selected="false" class="tab" tabindex="-1">Serial Monitor</button>
-    </div>
-
-    <!-- Plan -->
-    <div role="tabpanel" id="view-plan" aria-labelledby="tab-plan" class="view active" tabindex="0">
-      <div class="view-inner" id="plan-body">
-        <div class="empty">
-          <h3>Nothing planned yet</h3>
-          <p>Describe your project in the assistant panel. The plan, parts list, pin assignments and testing steps appear here.</p>
-          <button type="button" class="btn" id="btn-try-example">Try the corridor light example</button>
+  <!-- ═════════════════════════════════════════════════════════════ chat ══ -->
+  <section class="chat-col pane shown" id="pane-chat" aria-label="Assistant">
+    <div class="chat-scroll" id="chat-scroll">
+      <div class="chat-inner">
+        <div class="hero" id="hero">
+          <h1 id="hero-title">Hello, I'm MakerCode AI</h1>
+          <p id="hero-sub">Tell me what you want to build and I will help you plan it, choose the parts, work out the pins, write the code and test it. You can also upload a photo of your wiring.</p>
+          <div class="starters" id="starters"></div>
         </div>
+        <div id="chat" role="log" aria-live="polite" aria-label="Conversation"></div>
       </div>
     </div>
 
-    <!-- Code -->
-    <div role="tabpanel" id="view-code" aria-labelledby="tab-code" class="view" tabindex="0" hidden>
-      <div class="code-toolbar">
-        <button type="button" class="btn tiny" data-code="copy">Copy code</button>
-        <button type="button" class="btn tiny" data-code="download">Download</button>
-        <button type="button" class="btn tiny" data-code="reset">Reset</button>
-        <span class="toolbar-divider" aria-hidden="true"></span>
-        <button type="button" class="btn tiny ghost" data-code="explain">Explain selection</button>
-        <button type="button" class="btn tiny ghost" data-code="findError">Find an error</button>
-        <button type="button" class="btn tiny ghost" data-code="improve">Improve this code</button>
-        <button type="button" class="btn tiny ghost" data-code="convert">Convert language</button>
-        <span class="toolbar-spacer"></span>
-        <a class="btn tiny ghost" id="link-makecode" href="https://makecode.microbit.org/" target="_blank" rel="noopener">Open MakeCode</a>
+    <div class="guide-bar" id="guide-bar" hidden>
+      <div class="guide-top">
+        <span class="guide-step" id="guide-step">Step 1 of 10 &middot; Trigger</span>
+        <div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Guided progress"><i id="guide-fill"></i></div>
       </div>
-      <div class="editor-shell">
-        <div id="monaco-host" class="monaco-host" hidden></div>
-        <label class="sr-only" for="code-fallback">Generated code</label>
-        <textarea id="code-fallback" class="code-fallback" spellcheck="false" placeholder="Generated code appears here."></textarea>
+      <div class="guide-btns">
+        <button type="button" class="btn tiny" data-guide="hint">Give me a hint</button>
+        <button type="button" class="btn tiny" data-guide="explain">Explain this concept</button>
+        <button type="button" class="btn tiny" data-guide="check">Check my thinking</button>
+        <button type="button" class="btn tiny" data-guide="step">Show one step</button>
+        <button type="button" class="btn tiny" data-guide="solution">Show solution</button>
+        <button type="button" class="btn tiny ghost" data-guide="similar">Similar challenge</button>
       </div>
-      <p class="editor-note" id="editor-note">Editor: plain text. Nothing here has been compiled.</p>
     </div>
 
-    <!-- Diagram -->
-    <div role="tabpanel" id="view-diagram" aria-labelledby="tab-diagram" class="view" tabindex="0" hidden>
-      <div class="view-inner" id="diagram-body"></div>
-    </div>
+    <div class="composer-wrap">
+      <form class="composer" id="composer">
+        <div class="attach" id="attach" hidden>
+          <img id="attach-img" alt="Preview of the image you are about to send">
+          <div style="min-width:0">
+            <div id="attach-name" style="font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+            <button type="button" class="btn tiny ghost" id="btn-attach-remove">Remove</button>
+          </div>
+        </div>
 
-    <!-- Parts -->
-    <div role="tabpanel" id="view-parts" aria-labelledby="tab-parts" class="view" tabindex="0" hidden>
-      <div class="view-inner" id="parts-body"></div>
-    </div>
+        <div class="composer-bar">
+          <div class="modes" role="group" aria-label="Assistant mode">
+            <button type="button" class="mode active" data-mode="socratic" title="Guides you with questions instead of giving the answer">Socratic</button>
+            <button type="button" class="mode" data-mode="build" title="Gives a complete solution with the reasoning">Build</button>
+            <button type="button" class="mode" data-mode="ask" title="Short answers, no project plan">Ask</button>
+          </div>
+          <span class="spacer"></span>
+          <div class="tool-btns">
+            <button type="button" class="btn tiny ghost" data-drawer="serial">Serial monitor</button>
+            <button type="button" class="btn tiny ghost" data-drawer="diagram">Diagram</button>
+            <button type="button" class="btn tiny ghost" data-drawer="parts">Part list</button>
+            <button type="button" class="btn tiny ghost" data-drawer="checks">Checks</button>
+          </div>
+        </div>
 
-    <!-- Simulator -->
-    <div role="tabpanel" id="view-simulator" aria-labelledby="tab-simulator" class="view" tabindex="0" hidden>
-      <div class="view-inner" id="simulator-body"></div>
-    </div>
+        <div class="model-row">
+          <label for="model-select">Model</label>
+          <select id="model-select"></select>
+          <span class="spacer"></span>
+          <label for="level-select" class="sr-only">Learner level</label>
+          <select id="level-select" title="Learner level">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+          <label for="lang-select" class="sr-only">Language</label>
+          <select id="lang-select" title="Programming language"></select>
+        </div>
 
-    <!-- Serial -->
-    <div role="tabpanel" id="view-serial" aria-labelledby="tab-serial" class="view" tabindex="0" hidden>
-      <div class="code-toolbar">
-        <button type="button" class="btn tiny" id="btn-connect">Connect micro:bit</button>
-        <button type="button" class="btn tiny ghost" id="btn-disconnect" disabled>Disconnect</button>
-        <button type="button" class="btn tiny ghost" id="btn-clear-serial">Clear</button>
-        <button type="button" class="btn tiny ghost" id="btn-serial-to-chat">Send to assistant</button>
-        <span class="toolbar-spacer"></span>
-        <label class="inline-check">
-          <input type="checkbox" id="serial-autoscroll" checked>
-          <span>Auto scroll</span>
-        </label>
-      </div>
-      <div class="serial-console" id="serial-console" role="log" aria-live="off" aria-label="Serial output"></div>
-      <form class="serial-send" id="serial-form">
-        <label class="sr-only" for="serial-input">Send a line to the board</label>
-        <input type="text" id="serial-input" placeholder="Type a line to send to the board" autocomplete="off">
-        <button type="submit" class="btn tiny">Send</button>
+        <div class="input-row">
+          <input type="file" id="img-input" accept="image/png,image/jpeg,image/webp" class="sr-only" tabindex="-1" aria-label="Choose an image of your circuit or code">
+          <button type="button" class="btn icon ghost" id="btn-attach" aria-label="Attach an image" title="Attach an image">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m4 18 5-5 4 4 3-3 4 4" stroke-linecap="round"/></svg>
+          </button>
+          <label class="sr-only" for="msg-input">Message MakerCode AI</label>
+          <textarea id="msg-input" rows="1" placeholder="Message MakerCode AI..."></textarea>
+          <button type="submit" class="btn primary" id="btn-send">Send</button>
+        </div>
       </form>
     </div>
+
+    <!-- ──────────────────────────────────────────────────────── drawer ── -->
+    <aside class="drawer" id="drawer" aria-label="Project details" aria-hidden="true">
+      <button type="button" class="btn icon ghost drawer-close" id="btn-drawer-close" aria-label="Close panel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+      </button>
+      <div class="drawer-head" role="tablist" aria-label="Details">
+        <button type="button" class="drawer-tab active" role="tab" data-view="plan">Plan</button>
+        <button type="button" class="drawer-tab" role="tab" data-view="diagram">Diagram</button>
+        <button type="button" class="drawer-tab" role="tab" data-view="parts">Parts</button>
+        <button type="button" class="drawer-tab" role="tab" data-view="checks">Checks</button>
+        <button type="button" class="drawer-tab" role="tab" data-view="board">Board</button>
+        <button type="button" class="drawer-tab" role="tab" data-view="serial">Serial</button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-view active" id="dv-plan"></div>
+        <div class="drawer-view" id="dv-diagram"></div>
+        <div class="drawer-view" id="dv-parts"></div>
+        <div class="drawer-view" id="dv-checks"></div>
+        <div class="drawer-view" id="dv-board"></div>
+        <div class="drawer-view" id="dv-serial">
+          <div class="row wrap" style="margin-bottom:10px">
+            <button type="button" class="btn tiny" id="btn-connect">Connect board</button>
+            <button type="button" class="btn tiny ghost" id="btn-disconnect" disabled>Disconnect</button>
+            <button type="button" class="btn tiny ghost" id="btn-serial-clear">Clear</button>
+            <button type="button" class="btn tiny ghost" id="btn-serial-chat">Send to assistant</button>
+          </div>
+          <div class="serial-out" id="serial-out" role="log" aria-label="Serial output"></div>
+          <form class="row" id="serial-form">
+            <label class="sr-only" for="serial-in">Send a line to the board</label>
+            <input type="text" id="serial-in" placeholder="Type a line to send" autocomplete="off">
+            <button type="submit" class="btn tiny">Send</button>
+          </form>
+          <p class="field-help" style="margin-top:10px">
+            This reads and writes the serial port only. It does not flash your board.
+            Needs Chrome, Edge or Opera on a desktop.
+          </p>
+        </div>
+      </div>
+    </aside>
   </section>
+</div>
 
-  <!-- ─────────────────────────────────────────────────────── right rail ── -->
-  <aside class="panel panel-right" aria-label="Board and project information">
-    <details class="rail" open>
-      <summary><h2>Board</h2></summary>
-      <div class="rail-body" id="rail-board"></div>
-    </details>
+<!-- ═══════════════════════════════════════════════════ onboarding dialog ══ -->
+<dialog id="dlg-onboard">
+  <div class="ob-head">
+    <svg class="glyph" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <rect x="7" y="7" width="18" height="18" rx="4"/>
+      <rect x="12" y="12" width="8" height="8" rx="1.5"/>
+      <path d="M12 7V3M20 7V3M12 29v-4M20 29v-4M7 12H3M7 20H3M29 12h-4M29 20h-4" stroke-linecap="round"/>
+    </svg>
+    <div class="step-dots"><i class="on" id="dot1"></i><i id="dot2"></i></div>
+    <h2 id="ob-title">Select your board</h2>
+    <p id="ob-sub">Choose the board you are using. This lets MakerCode AI pick the right pins, libraries and voltage warnings.</p>
+  </div>
 
-    <details class="rail" open>
-      <summary><h2>Pin assignments</h2></summary>
-      <div class="rail-body" id="rail-pins">
-        <p class="muted">No pins assigned yet.</p>
-      </div>
-    </details>
+  <div class="ob-scroll" id="ob-step-board">
+    <div id="board-picker"></div>
+  </div>
 
-    <details class="rail" open>
-      <summary><h2>Checks</h2></summary>
-      <div class="rail-body" id="rail-checks">
-        <p class="muted">Pin checks appear once a design is generated.</p>
-      </div>
-    </details>
-
-    <details class="rail">
-      <summary><h2>Components</h2></summary>
-      <div class="rail-body" id="rail-components">
-        <p class="muted">No components yet.</p>
-      </div>
-    </details>
-
-    <details class="rail">
-      <summary><h2>Learning progress</h2></summary>
-      <div class="rail-body" id="rail-progress"></div>
-    </details>
-
-    <details class="rail" open>
-      <summary><h2>Before you power up</h2></summary>
-      <div class="rail-body" id="rail-safety">
-        <ul class="tick-list">
-          <li>Disconnect power before changing any wiring.</li>
-          <li>Check every connection against the pin table.</li>
-          <li>Test one function at a time.</li>
-          <li>AI-generated code can be wrong. Read it before you run it.</li>
-        </ul>
-      </div>
-    </details>
-  </aside>
-</main>
-
-<!-- ───────────────────────────────────────────────────────── dialogs ── -->
-
-<dialog id="dlg-requirements" class="dlg">
-  <form method="dialog" class="dlg-body">
-    <h2>Project requirements</h2>
-    <p class="muted">Fill in what you know. Anything you leave blank, the assistant will ask about.</p>
-
+  <div class="ob-scroll" id="ob-step-key" hidden>
     <label class="field">
-      <span class="field-label">Project name</span>
-      <input type="text" id="req-name" placeholder="Corridor light">
+      <span class="field-label">Gemini API key</span>
+      <input type="password" id="ob-key" placeholder="Paste your key here" autocomplete="off">
     </label>
-    <label class="field">
-      <span class="field-label">Inputs — what the system senses</span>
-      <textarea id="req-inputs" rows="2" placeholder="PIR sensor, light level"></textarea>
-    </label>
-    <label class="field">
-      <span class="field-label">Processing — the rules it follows</span>
-      <textarea id="req-process" rows="2" placeholder="If movement and it is dark, switch on for 20 seconds"></textarea>
-    </label>
-    <label class="field">
-      <span class="field-label">Outputs — what it does</span>
-      <textarea id="req-outputs" rows="2" placeholder="Neopixel strip, buzzer"></textarea>
-    </label>
-    <label class="field">
-      <span class="field-label">Constraints — anything fixed</span>
-      <textarea id="req-constraints" rows="2" placeholder="Battery powered, must fit in a 10 cm box"></textarea>
-    </label>
+    <p class="field-help">
+      MakerCode AI talks to Google's Gemini API straight from your browser, so you
+      use your own free key. It is saved in this browser only and is never sent
+      anywhere except Google.
+    </p>
+    <ol class="steps" style="margin-top:12px">
+      <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and sign in with a Google account.</li>
+      <li>Click Create API key, then copy it.</li>
+      <li>Paste it above and press Test key.</li>
+    </ol>
+    <div class="row" style="margin-top:12px">
+      <button type="button" class="btn tiny" id="ob-test">Test key</button>
+      <span class="field-help" id="ob-key-result" aria-live="polite"></span>
+    </div>
+    <p class="note" style="margin-top:12px">
+      On a shared school computer, open Settings and press Forget key before you
+      leave. In class, give every student their own key: one shared key hits its
+      rate limit fast.
+    </p>
+  </div>
 
-    <p class="note">Do not include names, photos or any personal information about students.</p>
-
-    <menu class="dlg-actions">
-      <button type="submit" value="cancel" class="btn ghost">Cancel</button>
-      <button type="submit" value="save" class="btn primary">Save requirements</button>
-    </menu>
-  </form>
+  <div class="ob-foot">
+    <div class="row">
+      <button type="button" class="btn ghost" id="ob-back" hidden>Back</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn tiny ghost" id="ob-skip">Skip for now</button>
+      <button type="button" class="btn primary" id="ob-next" disabled>Continue</button>
+    </div>
+  </div>
 </dialog>
 
-<dialog id="dlg-settings" class="dlg">
+<!-- ══════════════════════════════════════════════════════ other dialogs ══ -->
+<dialog id="dlg-settings">
   <form method="dialog" class="dlg-body">
     <h2>Settings</h2>
 
     <label class="field">
       <span class="field-label">Gemini API key</span>
       <input type="password" id="set-key" placeholder="Paste your key" autocomplete="off">
-      <span class="field-help">
-        Stored in this browser only, never sent anywhere except Google. Get a free key at
-        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
-        On a shared classroom computer, clear it when you finish.
-      </span>
+      <span class="field-help">Saved in this browser only. Get a free key at
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</span>
     </label>
-    <div class="row">
+    <div class="row wrap">
       <button type="button" class="btn tiny" id="btn-test-key">Test key</button>
       <button type="button" class="btn tiny ghost" id="btn-forget-key">Forget key</button>
-      <span id="key-result" class="field-help" aria-live="polite"></span>
+      <span class="field-help" id="key-result" aria-live="polite"></span>
     </div>
 
-    <label class="field">
-      <span class="field-label">Model</span>
-      <select id="set-model"></select>
-      <span class="field-help">Lighter models cost less and answer faster. Heavier models plan better.</span>
-    </label>
-
-    <fieldset class="fieldset">
+    <fieldset>
       <legend>Learning</legend>
-      <label class="inline-check">
-        <input type="checkbox" id="set-socratic-default" checked>
-        <span>Start in Socratic Mode</span>
+      <label class="field">
+        <span class="field-label">Mode for new chats</span>
+        <select id="set-mode">
+          <option value="socratic">Socratic, guides with questions</option>
+          <option value="build">Build, gives full solutions</option>
+          <option value="ask">Ask, short answers only</option>
+        </select>
+        <span class="field-help">This also switches the chat you have open. The buttons above the message box override it any time.</span>
       </label>
-      <span class="field-help">
-        On, the assistant asks questions and guides the learner to the answer.
-        Off, it gives complete solutions with the reasoning behind them.
-        This sets the default for new projects and switches the current one too.
-        The top bar toggle still overrides it at any time.
-      </span>
     </fieldset>
 
-    <fieldset class="fieldset">
+    <fieldset>
       <legend>Display</legend>
       <label class="inline-check"><input type="checkbox" id="set-motion"><span>Reduce motion</span></label>
-      <label class="inline-check"><input type="checkbox" id="set-safety" checked><span>Show safety notices</span></label>
+      <label class="inline-check"><input type="checkbox" id="set-monaco" checked><span>Use the rich code editor (loads from a CDN)</span></label>
       <label class="field">
         <span class="field-label">Text size</span>
         <input type="range" id="set-font" min="0.9" max="1.35" step="0.05" value="1">
       </label>
     </fieldset>
 
-    <fieldset class="fieldset">
-      <legend>Project data</legend>
+    <fieldset>
+      <legend>Your data</legend>
       <p class="field-help" id="storage-usage"></p>
       <div class="row wrap">
-        <button type="button" class="btn tiny" id="btn-export">Export all projects</button>
+        <button type="button" class="btn tiny" id="btn-export">Export all chats</button>
         <button type="button" class="btn tiny" id="btn-import">Import from file</button>
-        <input type="file" id="import-input" accept="application/json"
-               class="sr-only" tabindex="-1" aria-label="Choose a project JSON file to import">
-        <button type="button" class="btn tiny danger" id="btn-clear-data">Clear project data</button>
+        <input type="file" id="import-input" accept="application/json" class="sr-only" tabindex="-1" aria-label="Choose a JSON file to import">
+        <button type="button" class="btn tiny danger" id="btn-clear-data">Clear all data</button>
       </div>
     </fieldset>
 
-    <menu class="dlg-actions">
-      <button type="submit" value="close" class="btn primary">Done</button>
-    </menu>
+    <menu class="dlg-actions"><button type="submit" value="close" class="btn primary">Done</button></menu>
   </form>
 </dialog>
 
-<dialog id="dlg-projects" class="dlg">
+<dialog id="dlg-rules">
   <form method="dialog" class="dlg-body">
-    <h2>Your projects</h2>
-    <div id="project-list" class="project-list"></div>
+    <h2>Project rules</h2>
+    <p class="field-help">Extra instructions sent with every message in this chat. Useful for
+      class rules such as which parts are in the kit, or a style you want the code written in.</p>
+    <label class="field">
+      <span class="field-label">Rules</span>
+      <textarea id="rules-text" rows="7" placeholder="Only use parts from our kit: LEDs, 220 ohm resistors, push buttons, one servo.&#10;Always use named constants instead of raw pin numbers.&#10;Explain in British English."></textarea>
+    </label>
     <menu class="dlg-actions">
-      <button type="submit" value="close" class="btn ghost">Close</button>
+      <button type="submit" value="cancel" class="btn ghost">Cancel</button>
+      <button type="submit" value="save" class="btn primary">Save rules</button>
     </menu>
   </form>
 </dialog>
 
-<dialog id="dlg-help" class="dlg">
+<dialog id="dlg-help">
   <form method="dialog" class="dlg-body">
     <h2>How to use MakerCode AI</h2>
 
     <h3>Getting started</h3>
-    <ol class="numbered">
-      <li>Pick your board, language and level in the top bar.</li>
-      <li>Add a Gemini API key in Settings. Without one you get the offline example only.</li>
+    <ol class="steps">
+      <li>Pick your board. Change it any time with the Change button.</li>
+      <li>Add your own Gemini API key in Settings.</li>
       <li>Describe what you want to build in your own words.</li>
-      <li>Socratic Mode starts on. Switch it off in the top bar, or in Settings, for full solutions.</li>
-      <li>Read the plan and the pin checks before you wire anything.</li>
+      <li>Read the Checks panel before you wire anything up.</li>
     </ol>
 
-    <h3>Socratic Mode</h3>
-    <p>This is on by default. The assistant does not hand over answers. It asks one question at a time and works through trigger, input, decision, output, structure, component, pin, test, edge case and improvement. Hints get stronger each time you ask. Show solution unlocks once you have made an attempt.</p>
+    <h3>The three modes</h3>
+    <ul class="dots">
+      <li><b>Socratic</b> is the default. One question at a time, hints that get stronger, and the solution stays locked until you have made a real attempt.</li>
+      <li><b>Build</b> gives the complete solution with the reasoning and testing steps.</li>
+      <li><b>Ask</b> is for quick questions with no project plan attached.</li>
+    </ul>
 
     <h3>What this app does not do</h3>
-    <ul class="tick-list">
-      <li>It does not compile code. Anything shown is marked as not yet compiled.</li>
-      <li>It does not flash your board. Download the file and use MakeCode or the Arduino IDE.</li>
-      <li>It cannot confirm that wiring is safe from a photograph.</li>
+    <ul class="dots">
+      <li>It does not compile. Code is always marked Not compiled.</li>
+      <li>It does not flash your board. Download the file and open it in MakeCode, the MicroPython editor or the Arduino IDE.</li>
+      <li>It cannot tell you wiring is safe from a photo. It says what it can see and what is unclear.</li>
     </ul>
 
-    <h3>Using it in class</h3>
-    <p>Each student needs their own API key, or one shared key will hit its rate limit quickly. Projects save to the browser they were made in and do not follow a student to another machine — export the JSON to move work.</p>
+    <h3>Using it with a class</h3>
+    <p>Every student needs their own API key, or one shared key hits its rate limit
+      within minutes. Chats are saved in the browser they were made in, so export
+      the JSON to move work to another machine.</p>
 
     <h3>Responsible use</h3>
-    <ul class="tick-list">
-      <li>AI-generated code can contain mistakes. Verify wiring before applying power.</li>
+    <ul class="dots">
+      <li>AI-generated code can be wrong. Check the wiring before applying power.</li>
       <li>Test one function at a time.</li>
-      <li>A teacher should review anything safety critical, including mains, heat, motors and lithium cells.</li>
-      <li>Do not put personal information in prompts.</li>
-      <li>Do not upload images showing identifiable students without consent and approval.</li>
+      <li>A teacher should review anything involving mains, heat, motors or lithium cells.</li>
+      <li>Do not put personal information in prompts, and do not upload photos with identifiable students without consent and approval.</li>
     </ul>
 
-    <menu class="dlg-actions">
-      <button type="submit" value="close" class="btn primary">Close</button>
-    </menu>
+    <menu class="dlg-actions"><button type="submit" value="close" class="btn primary">Close</button></menu>
   </form>
 </dialog>
 
-<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+/* =====================================================================
+   MakerCode AI  |  single file, no modules, no build step
+   Everything runs in the browser. You bring your own Gemini API key.
+   ===================================================================== */
+(function () {
+'use strict';
 
-<script type="module" src="app.js"></script>
+/* ─────────────────────────────────────────────────────────── config ── */
+
+var APP = { name: 'MakerCode AI', version: '2.0.0' };
+
+var GEMINI = {
+  /* Change this one value to switch models. Verified model IDs:
+     gemini-3.8-flash    current Flash, best reasoning
+     gemini-3.7-flash    previous Flash, fully supported
+     gemini-3.6-flash    cheapest, fine for classroom volume
+     gemini-flash-latest rolling alias, moves without warning          */
+  model: 'gemini-3.8-flash',
+  choices: [
+    { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
+    { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
+    { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
+    { id: 'gemini-flash-latest', label: 'Gemini Flash (latest)' }
+  ],
+  base: 'https://generativelanguage.googleapis.com',
+  version: 'v1beta',
+  temperature: 0.35,
+  maxOutputTokens: 8192,
+  timeoutMs: 90000,
+  maxImageBytes: 4 * 1024 * 1024,
+  maxTurns: 12
+};
+
+var KEYS = {
+  chats: 'makercode.chats.v2',
+  active: 'makercode.active.v2',
+  settings: 'makercode.settings.v2',
+  apiKey: 'makercode.key.v2'
+};
+
+var MONACO_BASE = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs';
+
+var LANGS = {
+  'arduino-cpp':     { label: 'Arduino C++',        ext: 'ino', mon: 'cpp',        file: 'sketch.ino' },
+  'micropython':     { label: 'MicroPython',        ext: 'py',  mon: 'python',     file: 'main.py' },
+  'makecode-js':     { label: 'MakeCode JavaScript', ext: 'js', mon: 'javascript', file: 'main.js' },
+  'makecode-blocks': { label: 'MakeCode blocks',    ext: 'txt', mon: 'markdown',   file: 'blocks.txt' }
+};
+
+var LEVELS = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+
+var LINKS = {
+  makecode: 'https://makecode.microbit.org/',
+  micropython: 'https://python.microbit.org/v/3',
+  arduino: 'https://www.arduino.cc/en/software',
+  key: 'https://aistudio.google.com/apikey'
+};
+
+var EMPTY = {
+  assistantMode: 'socratic', board: '', language: '', projectTitle: '',
+  understanding: '', questions: [], plan: [], parts: [], pins: [], code: '',
+  explanation: [], wiringSteps: [], safetyWarnings: [], testSteps: [],
+  debuggingSteps: [], reflectionQuestion: '', extensionChallenge: ''
+};
+
+/* ──────────────────────────────────────────── board illustrations ── */
+/* Drawn here rather than loaded as photos, so the app works offline
+   and carries no third party images. */
+
+function art(kind) {
+  var g = {
+    teal: '#00979D', blue: '#2B6CB0', black: '#1A1F2B', purple: '#7C3AED',
+    red: '#C53030', gold: '#D69E2E', silver: '#94A3B8', green: '#166534'
+  };
+  function pins(x, y, n, w, gap, col) {
+    var s = '', i;
+    for (i = 0; i < n; i++) s += '<rect x="' + (x + i * gap) + '" y="' + y + '" width="' + w + '" height="3" rx="1" fill="' + (col || g.gold) + '"/>';
+    return s;
+  }
+  var head = '<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+  var body, i;
+
+  switch (kind) {
+    case 'uno':
+      body = '<rect x="10" y="14" width="80" height="42" rx="3" fill="' + g.teal + '"/>' +
+        '<rect x="12" y="10" width="18" height="12" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="76" y="42" width="12" height="10" rx="1" fill="' + g.silver + '"/>' +
+        '<rect x="40" y="28" width="26" height="14" rx="1" fill="' + g.black + '"/>' +
+        pins(16, 16, 14, 4, 5) + pins(16, 52, 12, 4, 5);
+      break;
+    case 'unor4':
+      body = '<rect x="10" y="14" width="80" height="42" rx="3" fill="' + g.teal + '"/>' +
+        '<rect x="12" y="10" width="14" height="11" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="38" y="26" width="22" height="16" rx="1" fill="' + g.black + '"/>' +
+        '<rect x="64" y="28" width="16" height="12" rx="1" fill="' + g.silver + '"/>' +
+        '<path d="M66 30h12v8h-12z" fill="' + g.black + '"/>' +
+        pins(16, 16, 14, 4, 5) + pins(16, 52, 12, 4, 5);
+      break;
+    case 'nano':
+      body = '<rect x="24" y="18" width="52" height="34" rx="2" fill="' + g.teal + '"/>' +
+        '<rect x="42" y="12" width="16" height="10" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="38" y="28" width="24" height="14" rx="1" fill="' + g.black + '"/>' +
+        pins(26, 20, 12, 3, 4) + pins(26, 48, 12, 3, 4);
+      break;
+    case 'mega':
+      body = '<rect x="6" y="14" width="88" height="42" rx="3" fill="' + g.teal + '"/>' +
+        '<rect x="8" y="10" width="16" height="11" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="34" y="27" width="30" height="16" rx="1" fill="' + g.black + '"/>' +
+        pins(12, 16, 17, 3, 4.6) + pins(12, 52, 17, 3, 4.6);
+      break;
+    case 'esp32devkit':
+      body = '<rect x="26" y="10" width="48" height="50" rx="2" fill="' + g.black + '"/>' +
+        '<rect x="34" y="14" width="32" height="20" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="42" y="52" width="16" height="10" rx="2" fill="' + g.silver + '"/>' +
+        pins(28, 20, 9, 3, 4.6) + pins(28, 46, 9, 3, 4.6);
+      break;
+    case 'esp32c3':
+      body = '<rect x="32" y="14" width="36" height="42" rx="2" fill="' + g.black + '"/>' +
+        '<rect x="38" y="18" width="24" height="15" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="44" y="48" width="12" height="8" rx="2" fill="' + g.silver + '"/>' +
+        pins(33, 22, 7, 3, 4.2) + pins(33, 42, 7, 3, 4.2);
+      break;
+    case 'esp32c3oled':
+      body = '<rect x="30" y="12" width="40" height="46" rx="2" fill="' + g.purple + '"/>' +
+        '<rect x="36" y="16" width="22" height="14" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="38" y="34" width="24" height="9" rx="1" fill="#0B1220" stroke="#38BDF8" stroke-width="1"/>' +
+        pins(31, 20, 8, 3, 4.2) + pins(31, 46, 8, 3, 4.2);
+      break;
+    case 'esp32s3':
+      body = '<rect x="26" y="10" width="48" height="50" rx="2" fill="' + g.black + '"/>' +
+        '<rect x="33" y="14" width="34" height="19" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="36" y="36" width="12" height="9" rx="1" fill="#334155"/>' +
+        '<rect x="52" y="36" width="12" height="9" rx="1" fill="#334155"/>' +
+        pins(28, 20, 9, 3, 4.6) + pins(28, 50, 9, 3, 4.6);
+      break;
+    case 'esp32cam':
+      body = '<rect x="28" y="10" width="44" height="50" rx="2" fill="' + g.black + '"/>' +
+        '<rect x="34" y="34" width="32" height="20" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="40" y="12" width="20" height="20" rx="3" fill="#111827" stroke="' + g.silver + '" stroke-width="1.5"/>' +
+        '<circle cx="50" cy="22" r="6" fill="#0EA5E9" opacity=".55"/><circle cx="50" cy="22" r="3" fill="#0B1220"/>' +
+        pins(30, 24, 8, 3, 4.4) + pins(30, 46, 8, 3, 4.4);
+      break;
+    case 'nodemcu':
+      body = '<rect x="26" y="12" width="48" height="46" rx="2" fill="' + g.black + '"/>' +
+        '<rect x="34" y="16" width="32" height="20" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="42" y="50" width="16" height="9" rx="2" fill="' + g.silver + '"/>' +
+        pins(28, 22, 9, 3, 4.6) + pins(28, 44, 9, 3, 4.6);
+      break;
+    case 'd1mini':
+      body = '<rect x="34" y="16" width="32" height="38" rx="2" fill="' + g.black + '"/>' +
+        '<rect x="39" y="20" width="22" height="14" rx="2" fill="' + g.silver + '"/>' +
+        '<rect x="44" y="46" width="12" height="8" rx="2" fill="' + g.silver + '"/>' +
+        pins(35, 24, 6, 3, 4.4) + pins(35, 42, 6, 3, 4.4);
+      break;
+    case 'esp01':
+      body = '<rect x="34" y="22" width="32" height="26" rx="2" fill="' + g.blue + '"/>' +
+        '<rect x="38" y="25" width="20" height="13" rx="1" fill="' + g.silver + '"/>' +
+        pins(38, 44, 4, 4, 6);
+      break;
+    case 'microbit':
+      body = '<path d="M18 16h64a10 10 0 0 1 0 32H18a10 10 0 0 1 0-32z" fill="' + g.green + '"/>';
+      var dots = '';
+      for (i = 0; i < 25; i++) {
+        dots += '<rect x="' + (37 + (i % 5) * 5.5) + '" y="' + (21 + Math.floor(i / 5) * 4.4) +
+          '" width="3" height="2.6" rx="0.6" fill="#F87171" opacity="' + (i % 3 ? '.35' : '.9') + '"/>';
+      }
+      body += dots +
+        '<rect x="24" y="27" width="7" height="7" rx="1.5" fill="#111827"/>' +
+        '<rect x="69" y="27" width="7" height="7" rx="1.5" fill="#111827"/>' +
+        '<rect x="20" y="48" width="60" height="7" rx="1" fill="' + g.gold + '" opacity=".85"/>' +
+        '<rect x="30" y="48" width="4" height="7" fill="' + g.green + '"/>' +
+        '<rect x="49" y="48" width="4" height="7" fill="' + g.green + '"/>' +
+        '<rect x="66" y="48" width="4" height="7" fill="' + g.green + '"/>';
+      break;
+    default:
+      body = '<rect x="22" y="16" width="56" height="38" rx="4" fill="' + g.black + '" stroke="' + g.silver + '"/>';
+  }
+  return head + body + '</svg>';
+}
+
+/* ────────────────────────────────────────────────── board profiles ── */
+
+function P(name, caps, note) { return { name: name, caps: caps, note: note || '' }; }
+
+/* Shared pin sets */
+function avrCommon() {
+  return [P('5V', [], 'Power out.'), P('3V3', [], 'Power out, limited current.'),
+    P('GND', [], 'Ground.'), P('VIN', [], 'Unregulated input.')];
+}
+function esp32ClassicPins() {
+  return [
+    P('GPIO0', ['digital','pwm','touch'], 'Strapping pin. Held low the board enters flash mode.'),
+    P('GPIO2', ['digital','pwm','analog','touch'], 'Strapping pin, often the on-board LED. ADC2.'),
+    P('GPIO4', ['digital','pwm','analog','touch'], 'ADC2, unavailable while Wi-Fi is on.'),
+    P('GPIO5', ['digital','pwm','spi'], 'Strapping pin, SPI SS.'),
+    P('GPIO12', ['digital','pwm','analog','touch'], 'Strapping pin, must be low at boot. ADC2.'),
+    P('GPIO13', ['digital','pwm','analog','touch'], 'ADC2.'),
+    P('GPIO14', ['digital','pwm','analog','touch'], 'ADC2.'),
+    P('GPIO15', ['digital','pwm','analog','touch'], 'Strapping pin. ADC2.'),
+    P('GPIO16', ['digital','pwm'], 'Free.'), P('GPIO17', ['digital','pwm'], 'Free.'),
+    P('GPIO18', ['digital','pwm','spi'], 'SPI SCK.'), P('GPIO19', ['digital','pwm','spi'], 'SPI MISO.'),
+    P('GPIO21', ['digital','pwm','i2c'], 'I2C SDA by default.'),
+    P('GPIO22', ['digital','pwm','i2c'], 'I2C SCL by default.'),
+    P('GPIO23', ['digital','pwm','spi'], 'SPI MOSI.'),
+    P('GPIO25', ['digital','pwm','analog'], 'ADC2 and DAC1.'),
+    P('GPIO26', ['digital','pwm','analog'], 'ADC2 and DAC2.'),
+    P('GPIO27', ['digital','pwm','analog','touch'], 'ADC2.'),
+    P('GPIO32', ['digital','pwm','analog','touch'], 'ADC1. Safe to use with Wi-Fi.'),
+    P('GPIO33', ['digital','pwm','analog','touch'], 'ADC1. Safe to use with Wi-Fi.'),
+    P('GPIO34', ['analog','inputOnly'], 'Input only, ADC1, no pull-up.'),
+    P('GPIO35', ['analog','inputOnly'], 'Input only, ADC1, no pull-up.'),
+    P('GPIO36', ['analog','inputOnly'], 'Input only, ADC1, no pull-up.'),
+    P('GPIO39', ['analog','inputOnly'], 'Input only, ADC1, no pull-up.'),
+    P('3V3', [], 'Power out.'), P('5V', [], 'From USB.'), P('GND', [], 'Ground.')
+  ];
+}
+function esp8266Pins() {
+  return [
+    P('D0', ['digital'], 'GPIO16. No PWM, no interrupt, no pull-up. Wire to RST for deep sleep wake.'),
+    P('D1', ['digital','pwm','i2c'], 'GPIO5. I2C SCL by default. Safe general pin.'),
+    P('D2', ['digital','pwm','i2c'], 'GPIO4. I2C SDA by default. Safe general pin.'),
+    P('D3', ['digital','pwm'], 'GPIO0. Strapping pin, pulled up. Holding it low at boot enters flash mode.'),
+    P('D4', ['digital','pwm'], 'GPIO2. Strapping pin and on-board LED. Must be high at boot.'),
+    P('D5', ['digital','pwm','spi'], 'GPIO14. SPI SCK. Safe general pin.'),
+    P('D6', ['digital','pwm','spi'], 'GPIO12. SPI MISO. Safe general pin.'),
+    P('D7', ['digital','pwm','spi'], 'GPIO13. SPI MOSI. Safe general pin.'),
+    P('D8', ['digital','pwm','spi'], 'GPIO15. SPI SS. Pulled down, must be low at boot.'),
+    P('RX', ['digital','serial'], 'GPIO3. Serial receive.'),
+    P('TX', ['digital','serial'], 'GPIO1. Serial transmit.'),
+    P('A0', ['analog','inputOnly'], 'The only analogue input. On this board a divider lets it read 0 to 3.3 V.'),
+    P('3V3', [], 'Power out.'), P('5V', [], 'From USB.'), P('GND', [], 'Ground.')
+  ];
+}
+
+var BOARDS = {};
+
+function reg(o) { BOARDS[o.id] = o; return o; }
+
+/* ---- Arduino */
+reg({ id: 'arduino-uno', group: 'Arduino', family: 'arduino', art: 'uno',
+  name: 'Arduino UNO', sub: 'ATmega328P, 5 V', logic: 5, pinMax: 20, boardMax: 200,
+  languages: ['arduino-cpp'], builtIn: ['LED on D13', 'Hardware serial on D0 and D1'],
+  notes: ['5 V logic. A 3.3 V sensor may need a level shifter.',
+    'Keep each pin under about 20 mA and the whole board under about 200 mA.',
+    'D0 and D1 are the USB serial pins. Using them breaks uploading.'],
+  pins: [P('D0',['digital','serial'],'Serial RX. Avoid.'), P('D1',['digital','serial'],'Serial TX. Avoid.'),
+    P('D2',['digital'],'Interrupt capable.'), P('D3',['digital','pwm'],'Interrupt capable.'),
+    P('D4',['digital']), P('D5',['digital','pwm']), P('D6',['digital','pwm']), P('D7',['digital']),
+    P('D8',['digital']), P('D9',['digital','pwm'],'Common servo pin.'),
+    P('D10',['digital','pwm','spi'],'SPI SS.'), P('D11',['digital','pwm','spi'],'SPI MOSI.'),
+    P('D12',['digital','spi'],'SPI MISO.'), P('D13',['digital','spi'],'SPI SCK and the built-in LED.'),
+    P('A0',['digital','analog']), P('A1',['digital','analog']), P('A2',['digital','analog']),
+    P('A3',['digital','analog']), P('A4',['digital','analog','i2c'],'I2C SDA.'),
+    P('A5',['digital','analog','i2c'],'I2C SCL.')].concat(avrCommon()) });
+
+reg({ id: 'arduino-uno-r4-wifi', group: 'Arduino', family: 'arduino', art: 'unor4',
+  name: 'Arduino UNO R4 WiFi', sub: 'RA4M1 + ESP32-S3, 5 V', logic: 5, pinMax: 8, boardMax: 200,
+  languages: ['arduino-cpp'],
+  builtIn: ['12x8 red LED matrix', 'Wi-Fi and Bluetooth', 'Real time clock', 'Qwiic I2C connector', 'DAC on A0'],
+  notes: ['5 V logic on the headers, same as a classic UNO.',
+    'Each pin is limited to about 8 mA, much less than the older UNO. Do not drive an LED without a resistor.',
+    'Analogue reads can be set to 12 or 14 bit, not just 10 bit.',
+    'A0 can output a real analogue voltage using the DAC.'],
+  pins: [P('D0',['digital','serial'],'Serial RX.'), P('D1',['digital','serial'],'Serial TX.'),
+    P('D2',['digital'],'Interrupt capable.'), P('D3',['digital','pwm'],'Interrupt capable.'),
+    P('D4',['digital']), P('D5',['digital','pwm']), P('D6',['digital','pwm']), P('D7',['digital']),
+    P('D8',['digital']), P('D9',['digital','pwm']), P('D10',['digital','pwm','spi'],'SPI SS.'),
+    P('D11',['digital','pwm','spi'],'SPI MOSI.'), P('D12',['digital','spi'],'SPI MISO.'),
+    P('D13',['digital','spi'],'SPI SCK and the built-in LED.'),
+    P('A0',['digital','analog'],'Also the DAC output.'), P('A1',['digital','analog']),
+    P('A2',['digital','analog']), P('A3',['digital','analog']),
+    P('A4',['digital','analog','i2c'],'I2C SDA.'), P('A5',['digital','analog','i2c'],'I2C SCL.')]
+    .concat(avrCommon()) });
+
+reg({ id: 'arduino-nano', group: 'Arduino', family: 'arduino', art: 'nano',
+  name: 'Arduino Nano', sub: 'ATmega328P, 5 V', logic: 5, pinMax: 20, boardMax: 200,
+  languages: ['arduino-cpp'], builtIn: ['LED on D13', 'Hardware serial on D0 and D1'],
+  notes: ['Same chip as the UNO in a smaller board.',
+    'A6 and A7 read analogue values only. They cannot be used as digital pins.'],
+  pins: BOARDS['arduino-uno'].pins.slice(0, 20).concat([
+    P('A6',['analog','inputOnly'],'Analogue input only.'),
+    P('A7',['analog','inputOnly'],'Analogue input only.')]).concat(avrCommon()) });
+
+(function () {
+  var p = [P('D0',['digital','serial'],'Serial RX.'), P('D1',['digital','serial'],'Serial TX.')], i;
+  for (i = 2; i <= 13; i++) p.push(P('D' + i, ['digital','pwm'], i <= 3 ? 'Interrupt capable.' : ''));
+  p.push(P('D14',['digital','serial'],'Serial3 TX.'), P('D15',['digital','serial'],'Serial3 RX.'),
+    P('D16',['digital','serial'],'Serial2 TX.'), P('D17',['digital','serial'],'Serial2 RX.'),
+    P('D18',['digital','serial'],'Serial1 TX.'), P('D19',['digital','serial'],'Serial1 RX.'),
+    P('D20',['digital','i2c'],'I2C SDA.'), P('D21',['digital','i2c'],'I2C SCL.'));
+  for (i = 22; i <= 43; i++) p.push(P('D' + i, ['digital']));
+  p.push(P('D44',['digital','pwm']), P('D45',['digital','pwm']), P('D46',['digital','pwm']));
+  for (i = 47; i <= 49; i++) p.push(P('D' + i, ['digital']));
+  p.push(P('D50',['digital','spi'],'SPI MISO.'), P('D51',['digital','spi'],'SPI MOSI.'),
+    P('D52',['digital','spi'],'SPI SCK.'), P('D53',['digital','spi'],'SPI SS.'));
+  for (i = 0; i <= 15; i++) p.push(P('A' + i, ['digital','analog']));
+  reg({ id: 'arduino-mega', group: 'Arduino', family: 'arduino', art: 'mega',
+    name: 'Arduino Mega 2560', sub: 'ATmega2560, 5 V', logic: 5, pinMax: 20, boardMax: 200,
+    languages: ['arduino-cpp'], builtIn: ['LED on D13', 'Four hardware serial ports'],
+    notes: ['Lots of pins, same 5 V logic and current limits as the UNO.',
+      'PWM is available on D2 to D13 and D44 to D46.'],
+    pins: p.concat(avrCommon()) });
+})();
+
+/* ---- ESP32 family */
+reg({ id: 'esp32-devkit-v1', group: 'ESP32 family', family: 'esp32', art: 'esp32devkit',
+  name: 'ESP32 DEVKIT V1', sub: 'WROOM-32, 30 pin', logic: 3.3, pinMax: 12, boardMax: 200,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['Wi-Fi', 'Bluetooth and BLE', 'Touch pins', 'Deep sleep'],
+  notes: ['3.3 V logic. A 5 V signal can damage a pin.',
+    'GPIO 6 to 11 are wired to the flash chip. Never use them.',
+    'GPIO 34 to 39 are input only and have no internal pull-up.',
+    'ADC2 pins stop reading analogue values while Wi-Fi is on. Use GPIO 32 to 39 for sensors in Wi-Fi projects.',
+    'GPIO 0, 2, 12 and 15 affect boot. A sensor holding one at the wrong level stops the board starting.'],
+  pins: esp32ClassicPins() });
+
+reg({ id: 'esp32-wroom-32u', group: 'ESP32 family', family: 'esp32', art: 'esp32devkit',
+  name: 'ESP32-WROOM-32U DevKitC V4', sub: 'External antenna, 38 pin', logic: 3.3, pinMax: 12, boardMax: 200,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['Wi-Fi with an external antenna socket', 'Bluetooth and BLE', 'Touch pins'],
+  notes: ['Same chip and pin rules as the DEVKIT V1.',
+    'The U version has no on-board antenna. Without an antenna screwed on, Wi-Fi range is very poor.',
+    'GPIO 6 to 11 are wired to the flash chip. Never use them.',
+    'ADC2 pins stop working while Wi-Fi is on.'],
+  pins: esp32ClassicPins() });
+
+reg({ id: 'esp32-c3-supermini', group: 'ESP32 family', family: 'esp32', art: 'esp32c3',
+  name: 'ESP32-C3 Super Mini', sub: 'RISC-V, 4 MB flash', logic: 3.3, pinMax: 12, boardMax: 150,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['Wi-Fi', 'BLE 5', 'Native USB', 'On-board LED on GPIO8'],
+  notes: ['3.3 V logic and a small board. Do not feed 5 V into a pin.',
+    'The on-board LED on GPIO8 is active low. Writing LOW turns it on.',
+    'GPIO8 and GPIO9 are strapping pins. A sensor pulling them at boot can stop the board starting.',
+    'GPIO9 is the BOOT button.',
+    'I2C and SPI pins can be assigned in software. There is no fixed SDA or SCL.',
+    'Antenna performance is poor if the board sits on metal or inside a metal box.'],
+  pins: [
+    P('GPIO0', ['digital','pwm','analog'], 'ADC1.'),
+    P('GPIO1', ['digital','pwm','analog'], 'ADC1.'),
+    P('GPIO2', ['digital','pwm','analog'], 'Strapping pin. ADC1.'),
+    P('GPIO3', ['digital','pwm','analog'], 'ADC1.'),
+    P('GPIO4', ['digital','pwm','analog'], 'ADC1.'),
+    P('GPIO5', ['digital','pwm','analog'], 'ADC2, unreliable while Wi-Fi is on.'),
+    P('GPIO6', ['digital','pwm'], 'Free.'), P('GPIO7', ['digital','pwm'], 'Free.'),
+    P('GPIO8', ['digital','pwm'], 'Strapping pin and the on-board LED, active low.'),
+    P('GPIO9', ['digital','pwm'], 'Strapping pin and the BOOT button.'),
+    P('GPIO10', ['digital','pwm'], 'Free.'),
+    P('GPIO20', ['digital','serial'], 'Serial RX.'), P('GPIO21', ['digital','serial'], 'Serial TX.'),
+    P('3V3', [], 'Power out.'), P('5V', [], 'From USB.'), P('GND', [], 'Ground.')] });
+
+reg({ id: 'esp32-c3-oled', group: 'ESP32 family', family: 'esp32', art: 'esp32c3oled',
+  name: 'ESP32-C3 OLED 0.42', sub: 'RISC-V with built-in screen', logic: 3.3, pinMax: 12, boardMax: 150,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['Wi-Fi', 'BLE 5', 'Native USB', '0.42 inch OLED, 72x40 pixels'],
+  notes: ['The OLED sits on the I2C bus at SDA GPIO5 and SCL GPIO6. Do not use those two pins for anything else.',
+    'The screen is only 72 by 40 pixels and is offset inside a 128x64 buffer. Most libraries need an offset set or nothing appears.',
+    'GPIO8 and GPIO9 are strapping pins.',
+    '3.3 V logic.'],
+  pins: [
+    P('GPIO0', ['digital','pwm','analog'], 'ADC1.'), P('GPIO1', ['digital','pwm','analog'], 'ADC1.'),
+    P('GPIO2', ['digital','pwm','analog'], 'Strapping pin. ADC1.'),
+    P('GPIO3', ['digital','pwm','analog'], 'ADC1.'), P('GPIO4', ['digital','pwm','analog'], 'ADC1.'),
+    P('GPIO5', ['i2c'], 'OLED SDA. Reserved.'), P('GPIO6', ['i2c'], 'OLED SCL. Reserved.'),
+    P('GPIO7', ['digital','pwm'], 'Free.'),
+    P('GPIO8', ['digital','pwm'], 'Strapping pin.'), P('GPIO9', ['digital','pwm'], 'Strapping pin and BOOT button.'),
+    P('GPIO10', ['digital','pwm'], 'Free.'),
+    P('GPIO20', ['digital','serial'], 'Serial RX.'), P('GPIO21', ['digital','serial'], 'Serial TX.'),
+    P('3V3', [], 'Power out.'), P('5V', [], 'From USB.'), P('GND', [], 'Ground.')] });
+
+reg({ id: 'esp32-s3-n16r8', group: 'ESP32 family', family: 'esp32', art: 'esp32s3',
+  name: 'ESP32-S3 N16R8', sub: '16 MB flash, 8 MB PSRAM', logic: 3.3, pinMax: 12, boardMax: 200,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['Wi-Fi', 'BLE 5', 'Two native USB ports', 'Touch pins', 'Camera and LCD interfaces'],
+  notes: ['3.3 V logic.',
+    'This is the R8 version, so it has octal PSRAM. GPIO 35, 36 and 37 are used by the PSRAM and are not available.',
+    'GPIO 19 and 20 are the native USB pins. Using them breaks the USB connection.',
+    'GPIO 0, 3, 45 and 46 are strapping pins.',
+    'ADC2 pins are unreliable while Wi-Fi is on. GPIO 1 to 10 are ADC1 and safe.'],
+  pins: (function () {
+    var p = [], i;
+    for (i = 1; i <= 10; i++) p.push(P('GPIO' + i, ['digital','pwm','analog','touch'], 'ADC1. Safe with Wi-Fi.'));
+    for (i = 11; i <= 14; i++) p.push(P('GPIO' + i, ['digital','pwm','analog','touch'], 'ADC2, unreliable with Wi-Fi.'));
+    for (i = 15; i <= 18; i++) p.push(P('GPIO' + i, ['digital','pwm','analog'], 'ADC2, unreliable with Wi-Fi.'));
+    p.push(P('GPIO19', ['digital','pwm'], 'Native USB D-. Avoid.'),
+      P('GPIO20', ['digital','pwm'], 'Native USB D+. Avoid.'),
+      P('GPIO21', ['digital','pwm'], 'Free.'),
+      P('GPIO38', ['digital','pwm'], 'Free, often the RGB LED.'),
+      P('GPIO39', ['digital','pwm'], 'Free.'), P('GPIO40', ['digital','pwm'], 'Free.'),
+      P('GPIO41', ['digital','pwm'], 'Free.'), P('GPIO42', ['digital','pwm'], 'Free.'),
+      P('GPIO45', ['digital','pwm'], 'Strapping pin.'), P('GPIO46', ['digital','pwm'], 'Strapping pin.'),
+      P('GPIO47', ['digital','pwm'], 'Free.'), P('GPIO48', ['digital','pwm'], 'Free.'),
+      P('3V3', [], 'Power out.'), P('5V', [], 'From USB.'), P('GND', [], 'Ground.'));
+    return p;
+  })() });
+
+reg({ id: 'esp32-cam', group: 'ESP32 family', family: 'esp32', art: 'esp32cam',
+  name: 'ESP32-CAM', sub: 'AI-Thinker, OV2640 camera', logic: 3.3, pinMax: 12, boardMax: 200,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['OV2640 camera', 'microSD slot', 'Wi-Fi', 'Bright flash LED on GPIO4', 'Red status LED on GPIO33'],
+  notes: ['There is no USB port. You need a USB to serial adapter, and GPIO0 must be joined to GND to upload.',
+    'The camera uses most of the pins. Only a few are free.',
+    'The camera needs a lot of current at start-up. A weak 5 V supply causes brownout resets, which look like random crashes.',
+    'GPIO 2, 4, 12, 13, 14 and 15 are shared with the microSD card. They are free only if you do not use the card.',
+    'GPIO4 drives the very bright flash LED. Using it as an output will flash the LED.',
+    'GPIO16 is used by the PSRAM on this board.'],
+  pins: [
+    P('GPIO0', ['digital'], 'Camera clock and the flash-mode strapping pin. Join to GND to upload.'),
+    P('GPIO1', ['digital','serial'], 'Serial TX.'), P('GPIO3', ['digital','serial'], 'Serial RX.'),
+    P('GPIO2', ['digital','pwm','analog'], 'Free if the microSD card is not used.'),
+    P('GPIO4', ['digital','pwm','analog'], 'Flash LED. Free if the SD card is not used, but the LED will light.'),
+    P('GPIO12', ['digital','pwm','analog'], 'Free if the SD card is not used. Strapping pin, must be low at boot.'),
+    P('GPIO13', ['digital','pwm','analog'], 'Free if the SD card is not used.'),
+    P('GPIO14', ['digital','pwm','analog'], 'Free if the SD card is not used.'),
+    P('GPIO15', ['digital','pwm','analog'], 'Free if the SD card is not used.'),
+    P('GPIO33', ['digital','pwm'], 'On-board red LED, active low. Not on the header.'),
+    P('3V3', [], 'Power out, weak.'), P('5V', [], 'Power in. Use a supply that can give 500 mA or more.'),
+    P('GND', [], 'Ground.')] });
+
+/* ---- ESP8266 family */
+reg({ id: 'nodemcu-v3', group: 'ESP8266 family', family: 'esp8266', art: 'nodemcu',
+  name: 'NodeMCU V3', sub: 'ESP-12E, 3.3 V', logic: 3.3, pinMax: 12, boardMax: 100,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['Wi-Fi', 'On-board LED on D4, active low', 'One analogue input'],
+  notes: ['3.3 V logic. 5 V on a pin will damage the chip.',
+    'There is only one analogue input, A0. You cannot read two analogue sensors without a multiplexer.',
+    'The pin labels on the board are D0 to D8, not the GPIO numbers. D1 is GPIO5, not GPIO1.',
+    'Safe general purpose pins are D1, D2, D5, D6 and D7. The rest affect boot.',
+    'Wi-Fi peaks can draw around 300 mA. A weak USB port causes random resets.'],
+  pins: esp8266Pins() });
+
+reg({ id: 'wemos-d1-mini', group: 'ESP8266 family', family: 'esp8266', art: 'd1mini',
+  name: 'Wemos D1 Mini', sub: 'ESP-12F, small form factor', logic: 3.3, pinMax: 12, boardMax: 100,
+  languages: ['arduino-cpp','micropython'],
+  builtIn: ['Wi-Fi', 'On-board LED on D4, active low', 'Stackable shields'],
+  notes: ['Same chip and same pin traps as the NodeMCU, in a smaller board.',
+    'Only one analogue input, A0.',
+    'Safe general purpose pins are D1, D2, D5, D6 and D7.',
+    'On this board A0 reads 0 to 3.2 V through a built-in divider.'],
+  pins: esp8266Pins() });
+
+reg({ id: 'esp-01', group: 'ESP8266 family', family: 'esp8266', art: 'esp01',
+  name: 'ESP-01', sub: 'Tiny ESP8266 module', logic: 3.3, pinMax: 12, boardMax: 100,
+  languages: ['arduino-cpp'],
+  builtIn: ['Wi-Fi', 'Two usable GPIO pins'],
+  notes: ['Only GPIO0 and GPIO2 are usable, and both are strapping pins.',
+    'Needs a proper 3.3 V supply that can deliver about 300 mA. The 3.3 V pin of an Arduino UNO is not enough.',
+    'Never connect it to 5 V.',
+    'To flash it, GPIO0 must be held low at power up.',
+    'GPIO2 must be high at boot or the board will not start.'],
+  pins: [
+    P('GPIO0', ['digital','pwm'], 'Strapping pin. Low at power up enters flash mode.'),
+    P('GPIO2', ['digital','pwm'], 'Strapping pin, must be high at boot. Often the on-board LED.'),
+    P('TX', ['digital','serial'], 'GPIO1, serial transmit.'),
+    P('RX', ['digital','serial'], 'GPIO3, serial receive.'),
+    P('CH_PD', [], 'Must be tied to 3.3 V or the module stays off.'),
+    P('3V3', [], 'Power in, 3.3 V only.'), P('GND', [], 'Ground.')] });
+
+/* ---- BBC micro:bit */
+(function () {
+  function mbPins() {
+    return [
+      P('P0', ['digital','analog','pwm','touch'], 'Large pad. Also the speaker pin on V2.'),
+      P('P1', ['digital','analog','pwm','touch'], 'Large pad, free to use.'),
+      P('P2', ['digital','analog','pwm','touch'], 'Large pad, free to use.'),
+      P('P3', ['digital','analog','pwm'], 'Shared with the LED display. Turn the display off first.'),
+      P('P4', ['digital','analog','pwm'], 'Shared with the LED display.'),
+      P('P5', ['digital'], 'Shared with Button A.'),
+      P('P6', ['digital'], 'Shared with the LED display.'),
+      P('P7', ['digital'], 'Shared with the LED display.'),
+      P('P8', ['digital','pwm'], 'Free general purpose pin.'),
+      P('P9', ['digital'], 'Shared with the LED display.'),
+      P('P10', ['digital','analog','pwm'], 'Shared with the LED display and light sensing.'),
+      P('P11', ['digital'], 'Shared with Button B.'),
+      P('P12', ['digital','pwm'], 'Reserved for accessibility, but usable.'),
+      P('P13', ['digital','spi'], 'SPI SCK.'), P('P14', ['digital','spi'], 'SPI MISO.'),
+      P('P15', ['digital','spi'], 'SPI MOSI.'), P('P16', ['digital','pwm'], 'Free general purpose pin.'),
+      P('P19', ['i2c'], 'I2C SCL. Do not use for general input or output.'),
+      P('P20', ['i2c'], 'I2C SDA. Do not use for general input or output.'),
+      P('3V', [], 'Power out, 3.3 V.'), P('GND', [], 'Ground.')];
+  }
+  reg({ id: 'microbit-v2', group: 'BBC micro:bit', family: 'microbit', art: 'microbit',
+    name: 'micro:bit V2', sub: 'nRF52833, speaker and mic', logic: 3.3, pinMax: 5, boardMax: 90,
+    languages: ['makecode-blocks','makecode-js','micropython'],
+    builtIn: ['5x5 LED display','Button A','Button B','Logo touch','Accelerometer','Compass',
+      'Temperature','Light level','Microphone','Speaker','Radio','Bluetooth'],
+    notes: ['Runs at 3.3 V. Never feed 5 V into a pin.',
+      'Total current from the 3V pad should stay under about 90 mA.',
+      'Neopixels and servos usually need their own power supply plus a shared ground.'],
+    pins: mbPins() });
+  reg({ id: 'microbit-v1', group: 'BBC micro:bit', family: 'microbit', art: 'microbit',
+    name: 'micro:bit V1', sub: 'nRF51822, original model', logic: 3.3, pinMax: 5, boardMax: 90,
+    languages: ['makecode-blocks','makecode-js','micropython'],
+    builtIn: ['5x5 LED display','Button A','Button B','Accelerometer','Compass',
+      'Temperature','Light level','Radio','Bluetooth'],
+    notes: ['No microphone, speaker or logo touch. Those need V2.',
+      'Less memory than V2. Long Neopixel strips or big sound files may not fit.',
+      'Runs at 3.3 V.'],
+    pins: mbPins() });
+})();
+
+var BOARD_ORDER = ['Arduino', 'ESP32 family', 'ESP8266 family', 'BBC micro:bit'];
+
+function getBoard(id) { return BOARDS[id] || BOARDS['microbit-v2']; }
+
+function findPin(boardId, pinName) {
+  if (!pinName) return null;
+  var board = getBoard(boardId);
+  var t = String(pinName).trim().toUpperCase().replace(/\s+/g, '');
+  var i, n;
+  for (i = 0; i < board.pins.length; i++) {
+    n = board.pins[i].name.toUpperCase();
+    if (n === t) return board.pins[i];
+    if (n.replace('GPIO', '') === t.replace('GPIO', '').replace(/^IO/, '')) return board.pins[i];
+    if (n === t.replace(/^PIN/, '')) return board.pins[i];
+  }
+  return null;
+}
+
+/* ─────────────────────────────────────────────── component library ── */
+
+var COMPONENTS = {
+  led: { name: 'LED', keywords: ['led','lamp','light emitting'], needs: ['digital'], power: 'board',
+    warnings: ['Always use a resistor in series, usually 220 to 330 ohm.', 'The long leg is positive.'] },
+  ledPwm: { name: 'LED with brightness control', keywords: ['fade','dimm','brightness'], needs: ['pwm'], power: 'board',
+    warnings: ['Needs a PWM capable pin to fade smoothly.'] },
+  button: { name: 'Push button', keywords: ['button','push switch','tactile'], needs: ['digital'], power: 'board',
+    warnings: ['Use a pull-up or pull-down resistor, or turn on the internal pull-up in code.',
+      'Expect bounce. Add a short delay or a debounce check.'] },
+  pot: { name: 'Potentiometer', keywords: ['potentiometer','pot','knob','dial','variable resistor'], needs: ['analog'], power: 'board',
+    warnings: ['Outer legs go to power and ground, the middle leg to the analogue pin.'] },
+  ldr: { name: 'Light sensor (LDR)', keywords: ['ldr','photoresistor','photocell','light sensor','light level'], needs: ['analog'], power: 'board',
+    warnings: ['Needs a fixed resistor to make a voltage divider, usually 10k ohm.'] },
+  buzzer: { name: 'Buzzer', keywords: ['buzzer','piezo','speaker','sounder'], needs: ['pwm'], power: 'board',
+    warnings: ['An active buzzer only needs a digital high or low. A passive buzzer needs a tone or PWM signal.'] },
+  servo: { name: 'Servo motor', keywords: ['servo'], needs: ['pwm'], power: 'external',
+    warnings: ['A servo can pull far more current than a board pin can supply.',
+      'Power the servo from its own supply and join the grounds.',
+      'A stalled servo draws a large current and gets hot.'] },
+  neopixel: { name: 'Neopixel / WS2812 strip', keywords: ['neopixel','ws2812','sk6812','addressable','led strip','rgb strip','pixel'], needs: ['digital'], power: 'external',
+    warnings: ['Each pixel at full white draws roughly 60 mA. Ten pixels can exceed what a board can give.',
+      'Use a separate 5 V supply for anything longer than a few pixels and join the grounds.',
+      'On a 3.3 V board the data line may need a level shifter for reliable colours.'] },
+  pir: { name: 'PIR motion sensor', keywords: ['pir','motion sensor','movement sensor','occupancy'], needs: ['digital'], power: 'board',
+    warnings: ['Most PIR modules need 5 V to work properly. Check yours before wiring it to a 3.3 V board.',
+      'A PIR needs 30 to 60 seconds to settle after power on.',
+      'The two small trimmers set sensitivity and how long the output stays high.'] },
+  ultrasonic: { name: 'Ultrasonic distance sensor (HC-SR04)', keywords: ['ultrasonic','hc-sr04','hcsr04','sonar','distance sensor','range finder'], needs: ['digital','digital'], power: 'board',
+    warnings: ['The standard HC-SR04 needs 5 V, and its echo output is 5 V, which can damage a 3.3 V board.',
+      'Use an HC-SR04P, or a voltage divider on the echo pin, for micro:bit, ESP32 and ESP8266.',
+      'Trigger and echo need two separate pins unless you have a three pin variant.'] },
+  tempAnalog: { name: 'Analogue temperature sensor (LM35, TMP36)', keywords: ['lm35','tmp36','analogue temperature','analog temperature'], needs: ['analog'], power: 'board',
+    warnings: ['LM35 and TMP36 look identical but use different formulas. Confirm the part number.'] },
+  tempDigital: { name: 'Digital temperature sensor (DHT11, DHT22, DS18B20)', keywords: ['dht11','dht22','dht','ds18b20','digital temperature','humidity'], needs: ['digital'], power: 'board',
+    warnings: ['DHT sensors need a 10k pull-up resistor on the data line.',
+      'DHT11 and DHT22 use different libraries and have different accuracy.',
+      'DS18B20 uses OneWire and needs a 4.7k pull-up.'] },
+  oled: { name: 'OLED or LCD display (I2C)', keywords: ['oled','lcd','ssd1306','display module','screen'], needs: ['i2c'], power: 'board',
+    warnings: ['Uses the shared I2C bus. Two devices with the same address will clash.',
+      'Run an I2C scanner first to confirm the address, often 0x3C or 0x27.'] },
+  relay: { name: 'Relay module', keywords: ['relay'], needs: ['digital'], power: 'external',
+    warnings: ['Do not switch mains voltage in a classroom project.',
+      'Many relay modules are active low.',
+      'Power the relay coil separately and join the grounds.'] },
+  motor: { name: 'Motor driver (L298N, TB6612)', keywords: ['motor driver','l298','tb6612','h-bridge','dc motor','stepper'], needs: ['pwm','digital','digital'], power: 'external',
+    warnings: ['Never drive a motor straight from a board pin.',
+      'Motors need their own supply and a shared ground.',
+      'Motors make electrical noise that can reset a board.'] }
+};
+
+function matchComponent(name) {
+  var key = String(name || '').toLowerCase(), best = null, score = 0, k, spec, i, w;
+  if (!key.trim()) return null;
+  for (k in COMPONENTS) {
+    spec = COMPONENTS[k];
+    for (i = 0; i < spec.keywords.length; i++) {
+      w = spec.keywords[i];
+      if (key.indexOf(w) !== -1 && w.length > score) { best = spec; score = w.length; }
+    }
+  }
+  return best;
+}
+
+/* ─────────────────────────────────────────────────── starter ideas ── */
+
+var STARTERS = [
+  { t: 'LED and button', f: ['*'], p: 'Turn an LED on and off with a push button, and explain how the input controls the output.' },
+  { t: 'Digital dice', f: ['microbit'], p: 'Shake the micro:bit to roll a dice and show the number on the LED display.' },
+  { t: 'Step counter', f: ['microbit'], p: 'Count steps with the accelerometer and show the total when button A is pressed.' },
+  { t: 'Rock paper scissors', f: ['microbit'], p: 'Shake to show rock, paper or scissors on the LED display.' },
+  { t: 'Reaction timer', f: ['*'], p: 'Wait a random time, light an LED, then measure how long the user takes to press the button.' },
+  { t: 'Temperature display', f: ['*'], p: 'Read the temperature and show it, updating every few seconds.' },
+  { t: 'Fall alert', f: ['microbit'], p: 'Detect a fall with the accelerometer, play a sound and send a radio alert.' },
+  { t: 'Corridor light', f: ['*'], p: 'A PIR sensor detects movement and switches on a Neopixel strip for 20 seconds, but only when the room is dark.' },
+  { t: 'Distance alarm', f: ['*'], p: 'Sound a buzzer faster as an object gets closer to an ultrasonic sensor.' },
+  { t: 'Servo door', f: ['*'], p: 'Open a small door with a servo when a button is pressed, then close it after five seconds.' },
+  { t: 'Mood lamp', f: ['*'], p: 'Change the colour of a Neopixel strip using a potentiometer or the light sensor.' },
+  { t: 'Radio remote', f: ['microbit'], p: 'Use one micro:bit to send radio commands that switch an output on another micro:bit.' },
+  { t: 'Wi-Fi sensor page', f: ['esp32','esp8266'], p: 'Read a sensor and serve the reading on a small web page over Wi-Fi.' },
+  { t: 'Deep sleep logger', f: ['esp32','esp8266'], p: 'Wake from deep sleep every minute, take a reading, then sleep again to save battery.' },
+  { t: 'BLE button', f: ['esp32'], p: 'Send a button press over Bluetooth Low Energy to a phone.' }
+];
+/* ═══════════════════════════════════════════════════════════ storage ══ */
+
+function readLS(key, fallback) {
+  try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch (e) { return fallback; }
+}
+function writeLS(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch (e) { return false; }
+}
+
+var DEFAULT_SETTINGS = {
+  model: '', mode: 'socratic', reduceMotion: false, useMonaco: true, fontScale: 1
+};
+
+function getSettings() {
+  var s = readLS(KEYS.settings, {}), out = {}, k;
+  for (k in DEFAULT_SETTINGS) out[k] = (k in s) ? s[k] : DEFAULT_SETTINGS[k];
+  return out;
+}
+function saveSettings(patch) {
+  var merged = getSettings(), k;
+  for (k in patch) merged[k] = patch[k];
+  writeLS(KEYS.settings, merged);
+  return merged;
+}
+function getApiKey() { try { return localStorage.getItem(KEYS.apiKey) || ''; } catch (e) { return ''; } }
+function setApiKey(v) {
+  try { if (v) localStorage.setItem(KEYS.apiKey, v); else localStorage.removeItem(KEYS.apiKey); return true; }
+  catch (e) { return false; }
+}
+
+function uid() { return 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function newChat(over) {
+  var s = getSettings();
+  var board = (over && over.board) || 'microbit-v2';
+  var lang = (over && over.language) || getBoard(board).languages[0];
+  var chat = {
+    id: uid(), name: 'New chat', board: board, language: lang,
+    level: 'beginner', mode: s.mode, rules: '',
+    files: [{ name: LANGS[lang].file, content: '' }], activeFile: 0,
+    messages: [], last: null,
+    guide: { step: 0, hints: 0, attempts: 0, revealed: false },
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+  };
+  if (over) for (var k in over) chat[k] = over[k];
+  return chat;
+}
+
+function listChats() {
+  var all = readLS(KEYS.chats, {}), out = [], k;
+  for (k in all) out.push(all[k]);
+  out.sort(function (a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+  return out;
+}
+function getChat(id) { return readLS(KEYS.chats, {})[id] || null; }
+function saveChat(chat) {
+  var all = readLS(KEYS.chats, {});
+  chat.updatedAt = new Date().toISOString();
+  all[chat.id] = chat;
+  var ok = writeLS(KEYS.chats, all);
+  if (ok) writeLS(KEYS.active, chat.id);
+  return ok;
+}
+function deleteChat(id) {
+  var all = readLS(KEYS.chats, {});
+  delete all[id];
+  writeLS(KEYS.chats, all);
+}
+function getActiveChat() {
+  var id = readLS(KEYS.active, null);
+  return id ? getChat(id) : null;
+}
+function exportAll() {
+  return JSON.stringify({
+    format: 'makercode-ai', version: APP.version,
+    exportedAt: new Date().toISOString(), chats: listChats()
+  }, null, 2);
+}
+function importJson(text) {
+  var data;
+  try { data = JSON.parse(text); } catch (e) { throw new Error('That file is not valid JSON.'); }
+  var incoming = data.chats || data.projects || (data.chat ? [data.chat] : (data.length ? data : null));
+  if (!incoming || !incoming.length) throw new Error('No chats found in that file.');
+  var all = readLS(KEYS.chats, {}), n = 0, i, c;
+  for (i = 0; i < incoming.length; i++) {
+    if (!incoming[i] || typeof incoming[i] !== 'object') continue;
+    c = newChat(incoming[i]);
+    c.id = uid();
+    if (!c.files || !c.files.length) c.files = [{ name: LANGS[c.language].file, content: c.code || '' }];
+    all[c.id] = c;
+    n++;
+  }
+  writeLS(KEYS.chats, all);
+  return n;
+}
+function clearAllData() {
+  var k;
+  for (k in KEYS) { try { localStorage.removeItem(KEYS[k]); } catch (e) {} }
+}
+function storageUsage() {
+  try {
+    var raw = localStorage.getItem(KEYS.chats) || '';
+    return { bytes: raw.length, chats: listChats().length };
+  } catch (e) { return { bytes: 0, chats: 0 }; }
+}
+
+/* ═════════════════════════════════════════════════════ pin validator ══ */
+
+var ELECTRICAL = /volt|current|\bmA\b|power|supply|ground|resistor|pull-?up|damage|heat|never|do not|level shift/i;
+
+function validatePins(pins, boardId) {
+  var board = getBoard(boardId), issues = [], used = {}, seen = {};
+  var i, row, raw, pin, spec, names, j;
+
+  for (i = 0; i < pins.length; i++) {
+    row = pins[i];
+    raw = String(row.boardPin || '').trim();
+    if (!raw) continue;
+
+    if (/external|separate|battery|psu|own supply/i.test(raw)) {
+      issues.push({ level: 'warn', title: row.component + ' uses a separate supply',
+        detail: 'Join that supply ground to the board ground, or the signal will not work.' });
+      continue;
+    }
+    if (/^(gnd|ground)$/i.test(raw) || /^(3v3?|5v|vin|vcc|ch_pd)$/i.test(raw)) continue;
+
+    pin = findPin(boardId, raw);
+    if (!pin) {
+      issues.push({ level: 'err', title: raw + ' is not a pin on the ' + board.name,
+        detail: 'Check the pin name for ' + row.component + '. The Board panel lists every valid pin.' });
+      continue;
+    }
+
+    if (used[pin.name]) {
+      issues.push({ level: 'err', title: pin.name + ' is assigned twice',
+        detail: used[pin.name] + ' and ' + row.component + ' are both on ' + pin.name + '. Move one of them.' });
+    } else { used[pin.name] = row.component; }
+
+    spec = matchComponent(row.component);
+    if (spec) {
+      if (spec.needs.indexOf('analog') !== -1 && pin.caps.indexOf('analog') === -1) {
+        issues.push({ level: 'err', title: pin.name + ' cannot read analogue values',
+          detail: row.component + ' needs an analogue input. Try: ' + capList(board, 'analog') + '.' });
+      }
+      if (spec.needs.indexOf('pwm') !== -1 && pin.caps.indexOf('pwm') === -1) {
+        issues.push({ level: 'err', title: pin.name + ' does not support PWM',
+          detail: row.component + ' needs a PWM pin. Try: ' + capList(board, 'pwm') + '.' });
+      }
+      if (spec.needs.indexOf('i2c') !== -1 && pin.caps.indexOf('i2c') === -1) {
+        issues.push({ level: 'warn', title: row.component + ' normally uses the I2C bus',
+          detail: 'On this board that is ' + capList(board, 'i2c') + '.' });
+      }
+      if (spec.power === 'external') {
+        issues.push({ level: 'warn', title: row.component + ' needs its own power',
+          detail: firstMatching(spec.warnings, /power|supply|current/i) || 'Do not power it from a board pin.' });
+      }
+    }
+
+    if (pin.caps.indexOf('inputOnly') !== -1) {
+      issues.push({ level: 'warn', title: pin.name + ' is input only',
+        detail: 'It cannot drive an output and has no internal pull-up resistor.' });
+    }
+    if (pin.caps.indexOf('i2c') !== -1 && !(spec && spec.needs.indexOf('i2c') !== -1)) {
+      issues.push({ level: 'warn', title: pin.name + ' is reserved for the I2C bus',
+        detail: 'Using it for something else will break any I2C display or sensor.' });
+    }
+    if (pin.caps.indexOf('serial') !== -1) {
+      issues.push({ level: 'warn', title: pin.name + ' is a serial pin',
+        detail: 'Using it can stop the board uploading or printing to the serial monitor.' });
+    }
+    if (/strapping|shared with|must be|reserved|avoid|not available|flash mode/i.test(pin.note)) {
+      issues.push({ level: 'warn', title: pin.name + ': read the note', detail: pin.note });
+    }
+  }
+
+  names = [];
+  for (i = 0; i < pins.length; i++) names.push(String(pins[i].component).toLowerCase());
+  names = names.join(' ');
+
+  if (board.logic === 3.3 && /(hc-?sr04|ultrasonic|sonar|pir|motion sensor|relay)/.test(names)) {
+    issues.push({ level: 'warn', title: 'Possible voltage mismatch',
+      detail: 'The ' + board.name + ' runs at 3.3 V. Standard HC-SR04, PIR and relay modules expect 5 V and can push 5 V back into a pin.' });
+  }
+  if (/neopixel|ws2812|sk6812|led strip|pixel/.test(names)) {
+    issues.push({ level: 'warn', title: 'Check the current budget',
+      detail: 'Each pixel can draw about 60 mA at full white. The ' + board.name + ' can supply roughly ' + board.boardMax + ' mA in total.' });
+  }
+
+  for (i = 0; i < pins.length; i++) {
+    spec = matchComponent(pins[i].component);
+    if (!spec || seen[spec.name]) continue;
+    seen[spec.name] = 1;
+    for (j = 0; j < spec.warnings.length; j++) {
+      if (!ELECTRICAL.test(spec.warnings[j])) continue;
+      if (hasDetail(issues, spec.warnings[j])) continue;
+      issues.push({ level: 'warn', title: spec.name, detail: spec.warnings[j] });
+    }
+  }
+
+  if (pins.length && !anyLevel(issues, 'err')) {
+    issues.unshift({ level: 'ok', title: 'No pin conflicts found',
+      detail: 'Still check every wire against the table before you power up.' });
+  }
+  return issues;
+}
+
+function capList(board, cap) {
+  var out = [], i;
+  for (i = 0; i < board.pins.length; i++) if (board.pins[i].caps.indexOf(cap) !== -1) out.push(board.pins[i].name);
+  return out.slice(0, 10).join(', ') + (out.length > 10 ? ' and others' : '');
+}
+function firstMatching(arr, re) { for (var i = 0; i < arr.length; i++) if (re.test(arr[i])) return arr[i]; return null; }
+function hasDetail(arr, d) { for (var i = 0; i < arr.length; i++) if (arr[i].detail === d) return true; return false; }
+function anyLevel(arr, lvl) { for (var i = 0; i < arr.length; i++) if (arr[i].level === lvl) return true; return false; }
+
+/* ═════════════════════════════════════════════════ socratic engine ══ */
+
+var STEPS = [
+  { id: 'trigger',   label: 'Trigger',   q: 'What should trigger the system?' },
+  { id: 'input',     label: 'Input',     q: 'What information must the board read?' },
+  { id: 'decision',  label: 'Decision',  q: 'What decision must the program make?' },
+  { id: 'output',    label: 'Output',    q: 'What should the system output?' },
+  { id: 'structure', label: 'Structure', q: 'Which programming structure is suitable?' },
+  { id: 'feature',   label: 'Feature',   q: 'Which component or board feature is required?' },
+  { id: 'pin',       label: 'Pin',       q: 'Which pin should be used?' },
+  { id: 'test',      label: 'Test',      q: 'What test would show whether it works?' },
+  { id: 'edge',      label: 'Edge case', q: 'What edge case could cause failure?' },
+  { id: 'improve',   label: 'Improve',   q: 'How could the design be improved?' }
+];
+
+var VOICE = {
+  beginner: 'Use short sentences and everyday words. Define any technical term the moment you use it.',
+  intermediate: 'Use normal technical vocabulary. Assume the learner knows variables, loops and functions.',
+  advanced: 'Use precise technical vocabulary. Assume the learner knows timing, state and non-blocking design.'
+};
+
+function guideStep(g) { return STEPS[Math.min(g.step, STEPS.length - 1)]; }
+function guideProgress(g) {
+  return { step: Math.min(g.step + 1, STEPS.length), total: STEPS.length,
+    percent: Math.round((g.step / STEPS.length) * 100), label: guideStep(g).label };
+}
+
+function guideAction(action, g, level) {
+  var step = guideStep(g), voice = VOICE[level] || VOICE.beginner, strength;
+
+  if (action === 'hint') {
+    g.hints = Math.min(g.hints + 1, 3);
+    strength = ['', 'a small hint', 'a stronger hint', 'a partial worked example'][g.hints];
+    return { text: 'Give me ' + strength + '.', note:
+      'The learner asked for a hint on: "' + step.q + '". Hint level ' + g.hints + ' of 3. Give ' + strength +
+      ' and nothing more. ' + (g.hints < 3
+        ? 'Do not give the answer. End by asking the same question again in a simpler way. '
+        : 'Show a partial example only, and leave the key part for the learner to complete. ') + voice };
+  }
+  if (action === 'explain') {
+    return { text: 'Explain the concept behind this step.', note:
+      'Explain the concept behind "' + step.q + '" in general terms, using a different example, not the learner\'s own project. ' +
+      'Put it in "explanation" and keep "code" empty. ' + voice };
+  }
+  if (action === 'check') {
+    return { text: 'Check my thinking.', note:
+      'Review the learner\'s most recent answer. Say what is correct first, then what is missing or wrong, ' +
+      'then ask one question that moves them forward. Do not give the full solution. ' + voice };
+  }
+  if (action === 'step') {
+    return { text: 'Show me one step.', note:
+      'Reveal exactly one step of the solution and no more. Put that single step in "plan" as one item and keep "code" empty. ' +
+      'End by asking what the next step should be. ' + voice };
+  }
+  if (action === 'solution') {
+    g.revealed = true;
+    return { text: 'Show me the solution.', note:
+      (g.attempts > 0
+        ? 'The learner has made an attempt and asked for the solution. Give it in full now. '
+        : 'The learner asked for the solution without attempting. Give it, but open "understanding" by naming the one idea they should look at closely. ') +
+      'Fill every field including "code", "explanation", "testSteps" and "debuggingSteps". ' +
+      'End with "reflectionQuestion" asking them to explain one line back in their own words. ' + voice };
+  }
+  if (action === 'similar') {
+    return { text: 'Give me a similar challenge.', note:
+      'Set a new but similar challenge at the same difficulty on the same board. Describe it in "understanding" ' +
+      'and put the goal in "extensionChallenge". Keep "code" and "plan" empty. ' +
+      'Ask the learner to state the input, process and output for the new challenge. ' + voice };
+  }
+  return { text: action, note: voice };
+}
+
+/* ═════════════════════════════════════════════════ gemini service ══ */
+
+function GeminiError(message, kind, status, hint) {
+  this.name = 'GeminiError';
+  this.message = message;
+  this.kind = kind || 'unknown';
+  this.status = status || 0;
+  this.hint = hint || '';
+}
+GeminiError.prototype = Object.create(Error.prototype);
+
+function boardBriefing(boardId) {
+  var b = getBoard(boardId), lines = [], i, p;
+  for (i = 0; i < b.pins.length; i++) {
+    p = b.pins[i];
+    if (!p.caps.length) continue;
+    lines.push(p.name + ' [' + p.caps.join(',') + ']' + (p.note ? ' - ' + p.note : ''));
+  }
+  return 'BOARD: ' + b.name + ' (' + b.sub + ')\n' +
+    'Logic level: ' + b.logic + ' V.\n' +
+    'Per-pin current guide: about ' + b.pinMax + ' mA. Whole board: about ' + b.boardMax + ' mA.\n' +
+    'Built in: ' + b.builtIn.join(', ') + '.\n' +
+    'Board notes:\n  - ' + b.notes.join('\n  - ') + '\n' +
+    'Usable pins:\n  ' + lines.join('\n  ');
+}
+
+function componentBriefing() {
+  var out = [], k, c;
+  for (k in COMPONENTS) {
+    c = COMPONENTS[k];
+    out.push('- ' + c.name + ' (needs ' + c.needs.join(' + ') + ', power: ' + c.power + '): ' + c.warnings[0]);
+  }
+  return out.join('\n');
+}
+
+var LEVEL_RULES = {
+  beginner: ['Keep every explanation short and concrete. One idea per sentence.',
+    'Explain sequence, variable, loop, condition and event when they first appear.',
+    'Describe every hardware connection in plain words, one wire at a time.',
+    'Avoid jargon. If you must use a term, define it straight away.'],
+  intermediate: ['Push the learner towards functions and reusable code.',
+    'Ask about sensor thresholds, units and edge cases.',
+    'Include at least one debugging question in the explanation.',
+    'Point out where a magic number should become a named constant.'],
+  advanced: ['Discuss architecture, timing, state management and non-blocking code.',
+    'Avoid blocking delay loops. Prefer timers, state machines and events.',
+    'Comment on performance, memory and hardware limits.',
+    'Suggest modular functions and say where the design would break under load.']
+};
+
+function systemInstruction(ctx) {
+  var langLabel = (LANGS[ctx.language] || {}).label || ctx.language;
+  var parts = [];
+
+  parts.push('You are MakerCode AI, a physical computing tutor for a school and polytechnic makerspace.');
+  parts.push('You help learners plan, wire, code, test and debug Arduino, ESP32, ESP8266 and BBC micro:bit projects.');
+  parts.push('');
+  parts.push(boardBriefing(ctx.boardId));
+  parts.push('');
+  parts.push('COMPONENT NOTES:');
+  parts.push(componentBriefing());
+  parts.push('');
+  parts.push('TARGET LANGUAGE: ' + langLabel + '.');
+  parts.push(ctx.language === 'makecode-blocks'
+    ? 'The learner is using MakeCode blocks. Put numbered block-by-block build steps in "code" as plain text, naming the exact category and block, for example "Basic > forever" then "Pins > digital read pin P2". Do not put JavaScript in the code field.'
+    : 'Write "code" as valid ' + langLabel + ' that runs as-is on this board.');
+  parts.push('');
+  parts.push('LEARNER LEVEL: ' + (LEVELS[ctx.level] || ctx.level) + '.');
+  parts.push('- ' + (LEVEL_RULES[ctx.level] || LEVEL_RULES.beginner).join('\n- '));
+  parts.push('');
+
+  if (ctx.mode === 'socratic') {
+    parts.push('SOCRATIC MODE IS ON.');
+    parts.push('Do not give the finished solution. Leave "code" empty unless the learner asked to see the solution or has made a genuine attempt you can build on.');
+    parts.push('Put exactly ONE meaningful question in "questions". Never more than one.');
+    parts.push('Start by helping the learner define the input, the process and the output.');
+    parts.push('Ask the learner to predict what should happen before you confirm anything.');
+    parts.push('If their last answer was wrong or incomplete, give a small hint inside "understanding", then ask the next question.');
+    parts.push('Use "plan" only for steps the learner has already worked out.');
+    parts.push('Never shame the learner. Say what they got right first.');
+    parts.push('Set "assistantMode" to "socratic".');
+  } else if (ctx.mode === 'ask') {
+    parts.push('ASK MODE IS ON.');
+    parts.push('Answer the question directly in "understanding", in under 150 words.');
+    parts.push('Leave "plan", "parts", "pins" and "code" empty unless the question is specifically about them.');
+    parts.push('Set "assistantMode" to "direct".');
+  } else {
+    parts.push('BUILD MODE IS ON.');
+    parts.push('Give a complete, working proposed solution.');
+    parts.push('Still explain the reasoning, the testing process and the likely failure points.');
+    parts.push('Leave "questions" empty unless a missing detail genuinely blocks the design.');
+    parts.push('Set "assistantMode" to "direct".');
+  }
+
+  parts.push('');
+  parts.push('HARDWARE RULES YOU MUST FOLLOW:');
+  parts.push('- Never assign two components to the same pin.');
+  parts.push('- Check each pin actually supports what the component needs: analogue input, PWM or plain digital.');
+  parts.push('- Warn when a component needs a different voltage from the board.');
+  parts.push('- Warn when a component needs its own power supply and a shared ground.');
+  parts.push('- Warn when the total current is likely to exceed what the board can supply.');
+  parts.push('- Tell the learner to disconnect power before changing any wiring.');
+  parts.push('- Where two similar modules behave differently, say so and explain how to tell them apart.');
+  parts.push('');
+  parts.push('HONESTY RULES:');
+  parts.push('- You have not compiled anything. Never say the code compiles or is verified.');
+  parts.push('- Never say wiring is safe. Say what to check.');
+  parts.push('- If you are unsure about a module or a connection, say you are unsure.');
+
+  if (ctx.rules) {
+    parts.push('');
+    parts.push('EXTRA RULES SET BY THE TEACHER OR LEARNER FOR THIS PROJECT. Follow them unless they conflict with the safety rules above:');
+    parts.push(ctx.rules);
+  }
+
+  parts.push('');
+  parts.push('Reply with JSON only, matching this shape exactly. Every key must be present, empty arrays are fine:');
+  parts.push(JSON.stringify(EMPTY));
+  parts.push('Set "board" to "' + getBoard(ctx.boardId).name + '" and "language" to "' + langLabel + '".');
+  return parts.join('\n');
+}
+
+function buildContents(ctx) {
+  var contents = [], history = (ctx.history || []).slice(-GEMINI.maxTurns), i, parts = [];
+  for (i = 0; i < history.length; i++) {
+    contents.push({ role: history[i].role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: history[i].text }] });
+  }
+  if (ctx.image) {
+    parts.push({ inlineData: { mimeType: ctx.image.mimeType, data: ctx.image.base64 } });
+    parts.push({ text: 'Look at the attached image of the learner\'s circuit, drawing or code. ' +
+      'In "understanding", list: components you can see, connections you think you can trace, connections that appear missing, ' +
+      'likely wiring mistakes, and anything obscured or unclear. Label every uncertain observation as uncertain. ' +
+      'Never say the wiring is safe based on an image alone.' });
+  }
+  parts.push({ text: ctx.prompt });
+  if (ctx.code) parts.push({ text: 'Current code in the editor:\n' + ctx.code });
+  contents.push({ role: 'user', parts: parts });
+  return contents;
+}
+
+function classify(status, body) {
+  if (status === 400 && /API key not valid/i.test(body)) {
+    return new GeminiError('That API key was rejected.', 'auth', status,
+      'Check the key in Settings, or make a new one in Google AI Studio.');
+  }
+  if (status === 401 || status === 403) {
+    return new GeminiError('The API key does not have permission for this model.', 'auth', status,
+      'Check the key restrictions, or pick a different model in Settings.');
+  }
+  if (status === 404) {
+    return new GeminiError('That model name was not found.', 'model', status,
+      'Pick another model in Settings. Model names retire without much notice.');
+  }
+  if (status === 429) {
+    return new GeminiError('Rate limit reached.', 'rate', status,
+      'Wait a minute and try again. In class, give every student their own key.');
+  }
+  if (status >= 500) {
+    return new GeminiError('Gemini returned a server error.', 'server', status, 'Try again in a moment.');
+  }
+  return new GeminiError('Request failed (' + status + ').', 'http', status, String(body).slice(0, 180));
+}
+
+function postGemini(apiKey, model, body) {
+  var url = GEMINI.base + '/' + GEMINI.version + '/models/' + model + ':generateContent';
+  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = controller ? setTimeout(function () { controller.abort(); }, GEMINI.timeoutMs) : null;
+  var opts = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(body)
+  };
+  if (controller) opts.signal = controller.signal;
+
+  return fetch(url, opts).then(function (res) {
+    if (timer) clearTimeout(timer);
+    return res.text().then(function (text) {
+      if (!res.ok) throw classify(res.status, text);
+      try { return JSON.parse(text); }
+      catch (e) { throw new GeminiError('The reply could not be read.', 'parse'); }
+    });
+  }, function (err) {
+    if (timer) clearTimeout(timer);
+    if (err && err.name === 'AbortError') {
+      throw new GeminiError('The request took too long and was cancelled.', 'timeout', 0,
+        'Try a shorter description, or a lighter model in Settings.');
+    }
+    if (err instanceof GeminiError) throw err;
+    throw new GeminiError('Could not reach Gemini.', 'network', 0,
+      'Check the network connection. School networks sometimes block this address.');
+  });
+}
+
+function extractText(payload) {
+  var cand = payload && payload.candidates && payload.candidates[0], out = '', i, parts;
+  if (!cand) {
+    var blocked = payload && payload.promptFeedback && payload.promptFeedback.blockReason;
+    throw new GeminiError(blocked ? 'The request was blocked (' + blocked + ').' : 'Gemini returned no answer.',
+      'empty', 0, 'Rewrite the description and try again.');
+  }
+  if (cand.finishReason === 'MAX_TOKENS') {
+    throw new GeminiError('The answer was cut off before it finished.', 'length', 0,
+      'Ask for a smaller part of the project.');
+  }
+  parts = (cand.content && cand.content.parts) || [];
+  for (i = 0; i < parts.length; i++) out += parts[i].text || '';
+  return out.trim();
+}
+
+function parseStructured(raw) {
+  var text = String(raw || '').trim(), obj = null, start, end, out = {}, k, v, i;
+  text = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  try { obj = JSON.parse(text); } catch (e) { obj = null; }
+  if (!obj) {
+    start = text.indexOf('{'); end = text.lastIndexOf('}');
+    if (start !== -1 && end > start) { try { obj = JSON.parse(text.slice(start, end + 1)); } catch (e2) { obj = null; } }
+  }
+  if (!obj || typeof obj !== 'object') {
+    throw new GeminiError('The answer was not in the expected format.', 'schema', 0,
+      'Send the message again. This usually clears on a retry.');
+  }
+  for (k in EMPTY) {
+    v = obj[k];
+    if (Object.prototype.toString.call(EMPTY[k]) === '[object Array]') {
+      out[k] = Object.prototype.toString.call(v) === '[object Array]' ? v : (v ? [v] : []);
+    } else if (typeof v === 'string') { out[k] = v; }
+    else if (v !== null && v !== undefined && typeof v !== 'object') { out[k] = String(v); }
+    else { out[k] = EMPTY[k]; }
+  }
+  var parts = [];
+  for (i = 0; i < out.parts.length; i++) {
+    if (!out.parts[i] || typeof out.parts[i] !== 'object') continue;
+    parts.push({ name: String(out.parts[i].name || ''), quantity: Number(out.parts[i].quantity) || 1,
+      purpose: String(out.parts[i].purpose || '') });
+  }
+  out.parts = parts;
+  var pins = [];
+  for (i = 0; i < out.pins.length; i++) {
+    if (!out.pins[i] || typeof out.pins[i] !== 'object') continue;
+    pins.push({ component: String(out.pins[i].component || ''), componentPin: String(out.pins[i].componentPin || ''),
+      boardPin: String(out.pins[i].boardPin || ''), notes: String(out.pins[i].notes || '') });
+  }
+  out.pins = pins;
+  var arrays = ['questions','plan','explanation','wiringSteps','safetyWarnings','testSteps','debuggingSteps'];
+  for (i = 0; i < arrays.length; i++) out[arrays[i]] = out[arrays[i]].map(String).filter(Boolean);
+  return out;
+}
+
+function generate(ctx) {
+  if (!ctx.apiKey) {
+    return Promise.reject(new GeminiError('No API key saved yet.', 'nokey', 0,
+      'Open Settings and paste a Gemini API key. It is free to make one.'));
+  }
+  var model = ctx.model || GEMINI.model;
+  var body = {
+    systemInstruction: { parts: [{ text: systemInstruction(ctx) }] },
+    contents: buildContents(ctx),
+    generationConfig: {
+      temperature: GEMINI.temperature,
+      maxOutputTokens: GEMINI.maxOutputTokens,
+      responseMimeType: 'application/json'
+    }
+  };
+  return postGemini(ctx.apiKey, model, body).then(function (payload) {
+    return parseStructured(extractText(payload));
+  }, function (err) {
+    /* Some models reject responseMimeType. Retry without it before giving up. */
+    if (err && err.status === 400) {
+      delete body.generationConfig.responseMimeType;
+      return postGemini(ctx.apiKey, model, body).then(function (p) {
+        return parseStructured(extractText(p));
+      });
+    }
+    throw err;
+  });
+}
+
+function testKey(apiKey, model) {
+  return fetch(GEMINI.base + '/' + GEMINI.version + '/models/' + (model || GEMINI.model),
+    { headers: { 'x-goog-api-key': apiKey } })
+    .then(function (res) {
+      if (res.ok) return true;
+      return res.text().then(function (t) { throw classify(res.status, t); });
+    }, function () {
+      throw new GeminiError('Could not reach Gemini.', 'network', 0, 'Check the network connection.');
+    });
+}
+/* ══════════════════════════════════════════════════════════════ ui ══ */
+
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { var n = document.querySelectorAll(sel), a = [], i; for (i = 0; i < n.length; i++) a.push(n[i]); return a; }
+
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function nl2br(s) { return esc(s).replace(/\n/g, '<br>'); }
+
+var toastTimer = null;
+function toast(msg, kind) {
+  var t = $('#toast');
+  t.textContent = msg;
+  t.className = kind || '';
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.hidden = true; }, 4200);
+}
+
+function pill(node, text, kind) { node.textContent = text; node.className = 'pill bare ' + (kind || ''); }
+
+function listUl(items, cls) {
+  var i, out = '<ul class="' + (cls || 'dots') + '">';
+  for (i = 0; i < items.length; i++) out += '<li>' + esc(items[i]) + '</li>';
+  return out + '</ul>';
+}
+function listOl(items) {
+  var i, out = '<ol class="steps">';
+  for (i = 0; i < items.length; i++) out += '<li>' + esc(items[i]) + '</li>';
+  return out + '</ol>';
+}
+function blockHtml(title, count, inner) {
+  return '<section class="block"><div class="block-head"><h3>' + esc(title) + '</h3>' +
+    (count ? '<span class="block-count">' + esc(count) + '</span>' : '') + '</div>' + inner + '</section>';
+}
+function calloutHtml(kind, icon, title, inner) {
+  return '<div class="callout ' + kind + '"><div class="callout-title" data-icon="' + icon + '">' +
+    esc(title) + '</div><div>' + inner + '</div></div>';
+}
+
+/* ───────────────────────────────────────────────────────────── state ── */
+
+var S = {
+  chat: null,
+  settings: getSettings(),
+  apiKey: getApiKey(),
+  image: null,
+  busy: false,
+  monaco: null,
+  originalCode: '',
+  pinErrors: 0,
+  serial: { port: null, reader: null, writer: null, state: 'disconnected', lines: [], partial: '', keep: false },
+  obBoard: null,
+  obStep: 1
+};
+
+/* ═══════════════════════════════════════════════════════ onboarding ══ */
+
+function renderBoardPicker() {
+  var host = $('#board-picker'), html = '', g, i, id, b, ids;
+  for (g = 0; g < BOARD_ORDER.length; g++) {
+    ids = [];
+    for (id in BOARDS) if (BOARDS[id].group === BOARD_ORDER[g]) ids.push(id);
+    if (!ids.length) continue;
+    html += '<div class="ob-group">' + esc(BOARD_ORDER[g]) + '</div><div class="board-grid">';
+    for (i = 0; i < ids.length; i++) {
+      b = BOARDS[ids[i]];
+      html += '<button type="button" class="board-card" data-board="' + b.id + '"' +
+        ' aria-pressed="false">' + art(b.art) +
+        '<b>' + esc(b.name) + '</b><small>' + esc(b.sub) + '</small></button>';
+    }
+    html += '</div>';
+  }
+  host.innerHTML = html;
+
+  host.addEventListener('click', function (e) {
+    var card = e.target.closest ? e.target.closest('.board-card') : null;
+    if (!card) return;
+    $$('.board-card').forEach(function (c) { c.classList.remove('sel'); c.setAttribute('aria-pressed', 'false'); });
+    card.classList.add('sel');
+    card.setAttribute('aria-pressed', 'true');
+    S.obBoard = card.getAttribute('data-board');
+    $('#ob-next').disabled = false;
+  });
+}
+
+function showOnboard(startStep, blank) {
+  S.obStep = startStep || 1;
+  S.obBoard = blank ? null : (S.chat ? S.chat.board : null);
+  $$('.board-card').forEach(function (c) {
+    var on = c.getAttribute('data-board') === S.obBoard;
+    c.classList.toggle('sel', on);
+    c.setAttribute('aria-pressed', String(on));
+  });
+  $('#ob-key').value = S.apiKey;
+  $('#ob-key-result').textContent = '';
+  paintOnboard();
+  var d = $('#dlg-onboard');
+  if (!d.open) d.showModal();
+}
+
+function paintOnboard() {
+  var onBoard = S.obStep === 1;
+  $('#ob-step-board').hidden = !onBoard;
+  $('#ob-step-key').hidden = onBoard;
+  $('#dot1').classList.toggle('on', true);
+  $('#dot2').classList.toggle('on', !onBoard);
+  $('#ob-title').textContent = onBoard ? 'Select your board' : 'Add your Gemini API key';
+  $('#ob-sub').textContent = onBoard
+    ? 'Choose the board you are using. This lets MakerCode AI pick the right pins, libraries and voltage warnings.'
+    : 'MakerCode AI runs entirely in your browser, so it uses your own key. It is free to create one.';
+  $('#ob-back').hidden = onBoard;
+  $('#ob-next').textContent = onBoard ? 'Continue' : 'Start building';
+  $('#ob-next').disabled = onBoard && !S.obBoard;
+  $('#ob-skip').textContent = onBoard ? 'Skip for now' : 'Do this later';
+}
+
+function finishOnboard() {
+  var key = $('#ob-key').value.trim();
+  if (key && key !== S.apiKey) { S.apiKey = key; setApiKey(key); }
+  $('#dlg-onboard').close();
+  applySettings();
+  if (!S.chat.messages.length) renderChat();
+}
+
+function wireOnboard() {
+  renderBoardPicker();
+  $('#ob-next').addEventListener('click', function () {
+    if (S.obStep === 1) {
+      if (!S.obBoard) return;
+      setBoard(S.obBoard);
+      S.obStep = 2;
+      paintOnboard();
+      $('#ob-key').focus();
+    } else { finishOnboard(); }
+  });
+  $('#ob-back').addEventListener('click', function () { S.obStep = 1; paintOnboard(); });
+  $('#ob-skip').addEventListener('click', function () {
+    if (S.obStep === 1) {
+      if (S.obBoard) setBoard(S.obBoard);
+      S.obStep = 2; paintOnboard();
+    } else { finishOnboard(); }
+  });
+  $('#ob-test').addEventListener('click', function () {
+    var key = $('#ob-key').value.trim(), out = $('#ob-key-result');
+    if (!key) { out.textContent = 'Paste a key first.'; return; }
+    out.textContent = 'Testing...';
+    testKey(key, S.settings.model || GEMINI.model).then(function () {
+      S.apiKey = key; setApiKey(key); applySettings();
+      out.textContent = 'Key works.';
+    }, function (err) { out.textContent = err.message + ' ' + (err.hint || ''); });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════ board ══ */
+
+function setBoard(id) {
+  var b = getBoard(id);
+  S.chat.board = id;
+  if (b.languages.indexOf(S.chat.language) === -1) {
+    S.chat.language = b.languages[0];
+    if (S.chat.files.length === 1 && !S.chat.files[0].content.trim()) {
+      S.chat.files[0].name = LANGS[S.chat.language].file;
+    }
+  }
+  $('#board-chip').innerHTML = art(b.art) + '<span id="board-chip-name">' + esc(b.name) + '</span>';
+  fillLanguages();
+  renderStarters();
+  renderBoardView();
+  renderFileTabs();
+  setEditorLanguage();
+  if (S.chat.last) renderChecks(validatePins(S.chat.last.pins, id));
+  save();
+}
+
+function fillLanguages() {
+  var b = getBoard(S.chat.board), sel = $('#lang-select'), html = '', i;
+  for (i = 0; i < b.languages.length; i++) {
+    html += '<option value="' + b.languages[i] + '">' + esc(LANGS[b.languages[i]].label) + '</option>';
+  }
+  sel.innerHTML = html;
+  sel.value = S.chat.language;
+}
+
+function renderBoardView() {
+  var b = getBoard(S.chat.board), i, html;
+  html = '<div style="text-align:center;margin-bottom:14px">' + art(b.art) +
+    '<div style="font-weight:650;margin-top:6px">' + esc(b.name) + '</div>' +
+    '<div class="muted" style="font-size:.8rem">' + esc(b.sub) + '</div></div>';
+  html += '<dl class="kv"><dt>Logic level</dt><dd>' + b.logic + ' V</dd>' +
+    '<dt>Per pin</dt><dd>~' + b.pinMax + ' mA</dd>' +
+    '<dt>Whole board</dt><dd>~' + b.boardMax + ' mA</dd></dl>';
+  html += '<div class="side-label" style="padding-left:0">Built in</div><div class="tags">';
+  for (i = 0; i < b.builtIn.length; i++) html += '<span class="tag">' + esc(b.builtIn[i]) + '</span>';
+  html += '</div>';
+  html += '<div class="side-label" style="padding-left:0">Watch out for</div>' + listUl(b.notes);
+  html += '<div class="side-label" style="padding-left:0">Pin reference</div><div class="table-wrap"><table>' +
+    '<thead><tr><th>Pin</th><th>Can do</th><th>Note</th></tr></thead><tbody>';
+  for (i = 0; i < b.pins.length; i++) {
+    html += '<tr><td><span class="pin-tag">' + esc(b.pins[i].name) + '</span></td>' +
+      '<td style="font-size:.76rem">' + esc(b.pins[i].caps.join(', ') || 'power') + '</td>' +
+      '<td style="font-size:.76rem">' + esc(b.pins[i].note) + '</td></tr>';
+  }
+  $('#dv-board').innerHTML = html + '</tbody></table></div>';
+}
+
+/* ══════════════════════════════════════════════════════════ sidebar ══ */
+
+function renderChatList() {
+  var q = ($('#search-chats').value || '').toLowerCase();
+  var chats = listChats(), html = '', i, c;
+  for (i = 0; i < chats.length; i++) {
+    c = chats[i];
+    if (q && c.name.toLowerCase().indexOf(q) === -1) continue;
+    html += '<div class="chat-item' + (S.chat && c.id === S.chat.id ? ' active' : '') + '" data-chat="' + c.id + '">' +
+      '<div class="chat-item-main"><div class="chat-item-name">' + esc(c.name) + '</div>' +
+      '<div class="chat-item-meta">' + esc(getBoard(c.board).name) + '</div></div>' +
+      '<button type="button" class="btn icon ghost" data-del="' + c.id + '" aria-label="Delete ' + esc(c.name) + '">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
+      '<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round"/></svg></button></div>';
+  }
+  $('#chat-list').innerHTML = html || '<p class="muted" style="font-size:.8rem;padding:4px">No chats yet.</p>';
+}
+
+function renderFileList() {
+  var html = '', i;
+  for (i = 0; i < S.chat.files.length; i++) {
+    html += '<div class="file-item' + (i === S.chat.activeFile ? ' active' : '') + '" data-file="' + i + '">' +
+      esc(S.chat.files[i].name) + '</div>';
+  }
+  $('#file-list').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════ editor ══ */
+
+function activeFile() { return S.chat.files[S.chat.activeFile] || S.chat.files[0]; }
+
+function renderFileTabs() {
+  var html = '', i;
+  for (i = 0; i < S.chat.files.length; i++) {
+    html += '<button type="button" class="file-tab' + (i === S.chat.activeFile ? ' active' : '') +
+      '" data-ftab="' + i + '">' + esc(S.chat.files[i].name) +
+      (S.chat.files.length > 1 ? '<span class="x" data-fclose="' + i + '" role="button" aria-label="Close file">&times;</span>' : '') +
+      '</button>';
+  }
+  $('#file-tabs').innerHTML = html;
+  renderFileList();
+}
+
+function getCode() { return S.monaco ? S.monaco.getValue() : $('#code-area').value; }
+function setCode(text) { if (S.monaco) S.monaco.setValue(text || ''); else $('#code-area').value = text || ''; }
+function getSel() {
+  if (S.monaco) {
+    var sel = S.monaco.getSelection();
+    return sel ? S.monaco.getModel().getValueInRange(sel) : '';
+  }
+  var ta = $('#code-area');
+  return ta.value.slice(ta.selectionStart, ta.selectionEnd);
+}
+
+function switchFile(i) {
+  activeFile().content = getCode();
+  S.chat.activeFile = i;
+  setCode(activeFile().content);
+  renderFileTabs();
+  setEditorLanguage();
+  save();
+}
+
+function setEditorLanguage() {
+  var b = getBoard(S.chat.board), lang = S.chat.language, link = $('#link-editor');
+  if (lang === 'micropython' && b.family === 'microbit') { link.href = LINKS.micropython; link.textContent = 'Open MicroPython'; }
+  else if (b.family === 'microbit') { link.href = LINKS.makecode; link.textContent = 'Open MakeCode'; }
+  else { link.href = LINKS.arduino; link.textContent = 'Get Arduino IDE'; }
+
+  if (S.monaco && window.monaco) {
+    var name = activeFile().name, mon = LANGS[lang].mon;
+    if (/\.py$/.test(name)) mon = 'python';
+    else if (/\.(ino|c|cpp|h)$/.test(name)) mon = 'cpp';
+    else if (/\.js$/.test(name)) mon = 'javascript';
+    window.monaco.editor.setModelLanguage(S.monaco.getModel(), mon);
+  }
+}
+
+function loadMonaco() {
+  return new Promise(function (resolve) {
+    if (!S.settings.useMonaco) { resolve(false); return; }
+    var done = false;
+    var timer = setTimeout(function () { if (!done) { done = true; resolve(false); } }, 7000);
+    var script = document.createElement('script');
+    script.src = MONACO_BASE + '/loader.js';
+    script.onerror = function () { if (!done) { done = true; clearTimeout(timer); resolve(false); } };
+    script.onload = function () {
+      try {
+        window.require.config({ paths: { vs: MONACO_BASE } });
+        window.require(['vs/editor/editor.main'], function () {
+          if (done) return;
+          done = true; clearTimeout(timer);
+          try {
+            window.monaco.editor.defineTheme('makercode', {
+              base: 'vs-dark', inherit: true, rules: [],
+              colors: { 'editor.background': '#070910', 'editorLineNumber.foreground': '#3D4A64' }
+            });
+            S.monaco = window.monaco.editor.create($('#monaco-host'), {
+              value: activeFile().content || '',
+              language: LANGS[S.chat.language].mon,
+              theme: 'makercode', automaticLayout: true, minimap: { enabled: false },
+              fontSize: 13, scrollBeyondLastLine: false, padding: { top: 10 },
+              wordWrap: 'on', ariaLabel: 'Generated code'
+            });
+            $('#monaco-host').hidden = false;
+            $('#code-area').hidden = true;
+            $('#editor-note').textContent = 'Rich editor with syntax highlighting';
+            resolve(true);
+          } catch (e) { resolve(false); }
+        }, function () { if (!done) { done = true; clearTimeout(timer); resolve(false); } });
+      } catch (e) { if (!done) { done = true; clearTimeout(timer); resolve(false); } }
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function downloadText(text, filename, mime) {
+  var blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
+function codeAction(action) {
+  var code = getCode(), sel = getSel(), name, i;
+
+  if (action === 'copy') {
+    if (!code.trim()) { toast('There is no code to copy yet.'); return; }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(function () { toast('Code copied', 'ok'); },
+        function () { toast('Could not copy. Select the code and copy it manually.', 'err'); });
+    } else { toast('Select the code and copy it manually.'); }
+    return;
+  }
+  if (action === 'download') {
+    if (!code.trim()) { toast('There is no code to download yet.'); return; }
+    downloadText(code, activeFile().name);
+    toast('Saved ' + activeFile().name + '. Open it in the editor for your board.', 'ok');
+    return;
+  }
+  if (action === 'add') {
+    name = window.prompt('File name', 'helper.' + LANGS[S.chat.language].ext);
+    if (!name) return;
+    name = name.trim().replace(/[^a-zA-Z0-9._-]/g, '_');
+    for (i = 0; i < S.chat.files.length; i++) {
+      if (S.chat.files[i].name === name) { toast('A file with that name already exists.', 'err'); return; }
+    }
+    activeFile().content = getCode();
+    S.chat.files.push({ name: name, content: '' });
+    S.chat.activeFile = S.chat.files.length - 1;
+    setCode('');
+    renderFileTabs(); setEditorLanguage(); save();
+    return;
+  }
+  if (action === 'rules') {
+    $('#rules-text').value = S.chat.rules || '';
+    $('#dlg-rules').showModal();
+    return;
+  }
+  if (action === 'explain') {
+    if (!sel.trim()) { toast('Select some code first, then press Explain.'); return; }
+    send('Explain this part of my code, line by line:\n\n' + sel,
+      { note: 'Explain only the selected lines. Put the explanation in "explanation" and leave "code" empty.', attempt: false });
+    return;
+  }
+  if (action === 'findError') {
+    if (!code.trim()) { toast('There is no code to check yet.'); return; }
+    send('Check this code for likely errors:\n\n' + code,
+      { note: 'Review the code for bugs, wrong pin use, blocking loops and off-by-one errors. List each finding in "debuggingSteps". ' +
+        'Only put corrected code in "code" if you are confident. Remind the learner you have not compiled it.', attempt: false });
+    return;
+  }
+  if (action === 'improve') {
+    if (!code.trim()) { toast('There is no code to improve yet.'); return; }
+    send('Suggest improvements to this code:\n\n' + code,
+      { note: 'Suggest improvements suited to the learner level. Explain each change in "explanation" before showing the improved code.', attempt: false });
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════ chat ══ */
+
+function renderStarters() {
+  var fam = getBoard(S.chat.board).family, html = '', i, n = 0;
+  for (i = 0; i < STARTERS.length && n < 6; i++) {
+    if (STARTERS[i].f.indexOf('*') === -1 && STARTERS[i].f.indexOf(fam) === -1) continue;
+    html += '<button type="button" class="starter" data-p="' + esc(STARTERS[i].p) + '">' + esc(STARTERS[i].t) + '</button>';
+    n++;
+  }
+  $('#starters').innerHTML = html;
+}
+
+function addMsg(role, html, isError) {
+  var node = document.createElement('div');
+  node.className = 'msg ' + role + (isError ? ' error' : '');
+  node.innerHTML = '<span class="msg-role">' +
+    (role === 'user' ? 'You' : role === 'system' ? 'MakerCode AI' : 'Assistant') + '</span>' +
+    '<div class="msg-body">' + html + '</div>';
+  $('#chat').appendChild(node);
+  $('#hero').hidden = true;
+  $('#chat-scroll').scrollTop = $('#chat-scroll').scrollHeight;
+  return node;
+}
+
+function renderChat() {
+  var i, m;
+  $('#chat').innerHTML = '';
+  if (!S.chat.messages.length) {
+    $('#hero').hidden = false;
+    $('#hero-title').textContent = 'Hello, I\'m MakerCode AI';
+    $('#hero-sub').textContent = S.chat.mode === 'socratic'
+      ? 'Tell me what you want to build on the ' + getBoard(S.chat.board).name +
+        '. Socratic mode is on, so I will work through it with you one question at a time rather than handing over the answer. Switch to Build below if you would rather see a full solution.'
+      : S.chat.mode === 'ask'
+        ? 'Ask me anything about the ' + getBoard(S.chat.board).name + ', its pins, its limits or your code. Short answers, no project plan.'
+        : 'Tell me what you want to build on the ' + getBoard(S.chat.board).name +
+          '. I will plan it, choose the parts, work out the pins, write the code and give you testing steps. You can also upload a photo of your wiring.';
+    return;
+  }
+  $('#hero').hidden = true;
+  for (i = 0; i < S.chat.messages.length; i++) {
+    m = S.chat.messages[i];
+    addMsg(m.role, nl2br(m.text));
+  }
+}
+
+function showTyping() {
+  return addMsg('assistant', '<span class="typing"><i></i><i></i><i></i></span>');
+}
+
+/* ─────────────────────────────────────────────── render a response ── */
+
+function renderPlan(r) {
+  var out = '';
+  if (r.projectTitle) out += '<h2 style="font-size:1.1rem;margin-bottom:10px">' + esc(r.projectTitle) + '</h2>';
+  if (r.understanding) out += calloutHtml('info', '&gt;', 'What I understand', esc(r.understanding));
+  if (r.questions.length) out += calloutHtml('', '?', r.questions.length > 1 ? 'Questions for you' : 'Question for you', listUl(r.questions));
+  if (r.safetyWarnings.length) out += calloutHtml('warn', '!', 'Check before you power up', listUl(r.safetyWarnings));
+  if (r.plan.length) out += blockHtml('Plan', r.plan.length + ' steps', listOl(r.plan));
+  if (r.wiringSteps.length) out += blockHtml('Wiring', r.wiringSteps.length + ' steps', listOl(r.wiringSteps));
+  if (r.explanation.length) out += blockHtml('How it works', '', listUl(r.explanation));
+  if (r.testSteps.length) out += blockHtml('Testing', r.testSteps.length + ' steps', listOl(r.testSteps));
+  if (r.debuggingSteps.length) out += blockHtml('If it does not work', '', listUl(r.debuggingSteps));
+  if (r.reflectionQuestion) out += calloutHtml('', '?', 'Think about this', esc(r.reflectionQuestion));
+  if (r.extensionChallenge) out += calloutHtml('ok', '+', 'Extension challenge', esc(r.extensionChallenge));
+  $('#dv-plan').innerHTML = out || '<p class="muted">Nothing planned yet. Describe your project in the chat.</p>';
+}
+
+function renderParts(r) {
+  var i, rows = '', notes = [], spec, j, out;
+  if (!r.parts.length) {
+    $('#dv-parts').innerHTML = '<p class="muted">No parts list yet.</p>';
+    return;
+  }
+  for (i = 0; i < r.parts.length; i++) {
+    rows += '<tr><td>' + esc(r.parts[i].quantity) + '</td><td><b>' + esc(r.parts[i].name) + '</b></td><td>' +
+      esc(r.parts[i].purpose) + '</td></tr>';
+    spec = matchComponent(r.parts[i].name);
+    if (spec) for (j = 0; j < spec.warnings.length; j++) if (notes.indexOf(spec.warnings[j]) === -1) notes.push(spec.warnings[j]);
+  }
+  out = blockHtml('Parts list', r.parts.length + ' items',
+    '<div class="table-wrap"><table><thead><tr><th>Qty</th><th>Part</th><th>What it does</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div>');
+  if (notes.length) out += blockHtml('Component notes', '', listUl(notes));
+  $('#dv-parts').innerHTML = out;
+}
+
+function renderDiagram(r) {
+  var i, raw, kind, pin, wires = '';
+  if (!r.pins.length) { $('#dv-diagram').innerHTML = '<p class="muted">No wiring yet.</p>'; return; }
+  for (i = 0; i < r.pins.length; i++) {
+    raw = String(r.pins[i].boardPin || '');
+    kind = /gnd|ground/i.test(raw) ? 'ground'
+      : (/^(3v3?|5v|vin|vcc)$/i.test(raw) || /external|supply|battery/i.test(raw)) ? 'power' : 'signal';
+    pin = findPin(S.chat.board, raw);
+    wires += '<div class="wire ' + kind + '"><div class="wire-end"><div>' + esc(r.pins[i].component) + '</div>' +
+      '<div class="wire-sub">' + esc(r.pins[i].componentPin || 'pin') + '</div></div>' +
+      '<div class="wire-link" aria-hidden="true"></div>' +
+      '<div class="wire-end r"><span class="pin-tag' + (kind === 'signal' && !pin ? ' bad' : '') + '">' + esc(raw) + '</span>' +
+      '<div class="wire-sub">' + esc(r.pins[i].notes || (pin ? pin.note : 'not a pin on this board')) + '</div></div></div>';
+  }
+  $('#dv-diagram').innerHTML =
+    calloutHtml('info', 'i', 'Wiring map, not a schematic',
+      'This shows what connects to what on the ' + esc(getBoard(S.chat.board).name) +
+      '. Each row is labelled as well as coloured, so it reads the same in greyscale.') +
+    blockHtml('Connections', r.pins.length + ' wires', wires) +
+    (r.wiringSteps.length ? blockHtml('Wiring order', r.wiringSteps.length + ' steps', listOl(r.wiringSteps)) : '');
+}
+
+function renderPinRows(pins) {
+  var i, pin, out = '';
+  for (i = 0; i < pins.length; i++) {
+    pin = findPin(S.chat.board, pins[i].boardPin);
+    out += '<div class="pin-row"><span class="pin-tag' + (pin ? '' : ' bad') + '">' + esc(pins[i].boardPin) + '</span>' +
+      '<div class="pin-row-main"><div class="pin-row-name">' + esc(pins[i].component) + '</div>' +
+      '<div class="pin-row-note">' + esc(pins[i].componentPin) + (pins[i].notes ? ' - ' + esc(pins[i].notes) : '') +
+      '</div></div></div>';
+  }
+  return out;
+}
+
+function renderChecks(issues) {
+  var order = { err: 0, warn: 1, ok: 2 }, sorted = issues.slice(), out = '', i, lvl;
+  sorted.sort(function (a, b) { return order[a.level] - order[b.level]; });
+  if (!sorted.length) {
+    $('#dv-checks').innerHTML = '<p class="muted">Pin checks appear once a design is generated.</p>';
+    return;
+  }
+  for (i = 0; i < sorted.length; i++) {
+    lvl = sorted[i].level;
+    out += calloutHtml(lvl === 'ok' ? 'ok' : lvl, lvl === 'err' ? '!!' : lvl === 'warn' ? '!' : 'OK',
+      sorted[i].title, esc(sorted[i].detail));
+  }
+  if (S.chat.last && S.chat.last.pins.length) {
+    out = blockHtml('Pin assignments', S.chat.last.pins.length + ' wires', renderPinRows(S.chat.last.pins)) +
+      blockHtml('Checks', '', out);
+  }
+  $('#dv-checks').innerHTML = out;
+}
+
+function renderResponse(r) {
+  var issues, badgeTab;
+  S.chat.last = r;
+  renderPlan(r); renderParts(r); renderDiagram(r);
+  issues = validatePins(r.pins, S.chat.board);
+  renderChecks(issues);
+
+  if (r.code) {
+    activeFile().content = r.code;
+    setCode(r.code);
+    S.originalCode = r.code;
+  }
+
+  S.pinErrors = 0;
+  for (var i = 0; i < issues.length; i++) if (issues[i].level === 'err') S.pinErrors++;
+  pill($('#pill-compile'), S.pinErrors
+    ? S.pinErrors + ' pin problem' + (S.pinErrors > 1 ? 's' : '')
+    : 'Not compiled', S.pinErrors ? 'err' : 'warn');
+
+  badgeTab = $('.drawer-tab[data-view="checks"]');
+  if (!$('#drawer').classList.contains('open') && (S.pinErrors || issues.length)) {
+    badgeTab.setAttribute('data-badge', S.pinErrors ? String(S.pinErrors) : '!');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════ guided ══ */
+
+function updateGuide() {
+  var on = S.chat.mode === 'socratic', p = guideProgress(S.chat.guide);
+  $('#guide-bar').hidden = !on;
+  $('#guide-step').textContent = 'Step ' + p.step + ' of ' + p.total + ' \u00b7 ' + p.label;
+  $('#guide-fill').style.width = p.percent + '%';
+  $('#guide-fill').parentNode.setAttribute('aria-valuenow', String(p.percent));
+  $$('.mode[data-mode]').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-mode') === S.chat.mode);
+  });
+}
+
+function setMode(mode) {
+  S.chat.mode = mode;
+  if (mode === 'socratic') { S.chat.guide = { step: 0, hints: 0, attempts: 0, revealed: false }; }
+  updateGuide();
+  if (!S.chat.messages.length) renderChat();
+  save();
+}
+
+function doGuide(action) {
+  var built;
+  if (action === 'solution' && S.chat.guide.attempts === 0) {
+    addMsg('system', 'Have a go first, even a rough one. Type what you think should happen, then ask again.');
+    $('#msg-input').focus();
+    return;
+  }
+  built = guideAction(action, S.chat.guide, S.chat.level);
+  send(built.text, { note: built.note, attempt: false });
+  updateGuide();
+}
+
+/* ═════════════════════════════════════════════════════════════ send ══ */
+
+function send(text, opts) {
+  opts = opts || {};
+  if (S.busy) return;
+  var trimmed = String(text || '').trim();
+  if (!trimmed && !S.image) return;
+
+  S.busy = true;
+  $('#btn-send').disabled = true;
+  $('#btn-send').textContent = 'Thinking';
+
+  var imgHtml = S.image
+    ? '<img class="msg-img" src="data:' + S.image.mimeType + ';base64,' + S.image.base64 + '" alt="Image you attached">'
+    : '';
+  addMsg('user', imgHtml + nl2br(trimmed));
+  S.chat.messages.push({ role: 'user', text: trimmed });
+  if (S.chat.name === 'New chat' && trimmed) {
+    S.chat.name = trimmed.slice(0, 42) + (trimmed.length > 42 ? '...' : '');
+  }
+  if (S.chat.mode === 'socratic' && opts.attempt !== false && trimmed) S.chat.guide.attempts++;
+  save();
+  renderChatList();
+
+  var typing = showTyping();
+  var ctx = {
+    apiKey: S.apiKey, model: S.settings.model || GEMINI.model,
+    boardId: S.chat.board, language: S.chat.language, level: S.chat.level,
+    mode: S.chat.mode, rules: S.chat.rules,
+    history: S.chat.messages.slice(0, -1), image: S.image,
+    code: S.chat.mode === 'ask' ? '' : getCode(),
+    prompt: opts.note ? trimmed + '\n\n[Instruction to the assistant: ' + opts.note + ']' : trimmed
+  };
+
+  generate(ctx).then(function (r) {
+    typing.parentNode.removeChild(typing);
+    var summary = '', i;
+    if (r.understanding) summary += '<p>' + nl2br(r.understanding) + '</p>';
+    for (i = 0; i < r.questions.length; i++) summary += '<div class="msg-q">' + esc(r.questions[i]) + '</div>';
+    if (!r.questions.length && (r.plan.length || r.pins.length)) {
+      summary += '<p class="muted" style="margin:8px 0 0;font-size:.84rem">Plan, wiring, parts and checks are in the panels below.</p>';
+    }
+    addMsg('assistant', summary || '<p>Done. Open the panels below to see the details.</p>');
+    S.chat.messages.push({ role: 'assistant', text: r.understanding || 'Generated a project plan.' });
+
+    renderResponse(r);
+    if (S.chat.mode === 'socratic' && r.questions.length) {
+      if (S.chat.guide.step < STEPS.length - 1) S.chat.guide.step++;
+      S.chat.guide.hints = 0;
+      updateGuide();
+    }
+    save();
+    renderChatList();
+  }, function (err) {
+    typing.parentNode.removeChild(typing);
+    var body = '<b>' + esc(err.message || 'Something went wrong.') + '</b>';
+    if (err.hint) body += '<p style="margin:6px 0 0">' + esc(err.hint) + '</p>';
+    if (err.kind === 'nokey') {
+      body += '<p style="margin:8px 0 0"><button type="button" class="btn tiny" id="err-open-key">Add a key</button></p>';
+    }
+    var node = addMsg('assistant', body, true);
+    var b = node.querySelector('#err-open-key');
+    if (b) b.addEventListener('click', function () { showOnboard(2); });
+  }).then(function () {
+    S.busy = false;
+    $('#btn-send').disabled = false;
+    $('#btn-send').textContent = 'Send';
+    clearImage();
+    save();
+    renderChatList();
+  });
+}
+
+/* ════════════════════════════════════════════════════════════ image ══ */
+
+function clearImage() {
+  S.image = null;
+  $('#attach').hidden = true;
+  $('#img-input').value = '';
+}
+
+function handleImage(file) {
+  if (!file) return;
+  if (file.size > GEMINI.maxImageBytes) {
+    toast('That image is too large. Keep it under ' + Math.round(GEMINI.maxImageBytes / 1048576) + ' MB.', 'err');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function () {
+    var dataUrl = String(reader.result);
+    S.image = { mimeType: file.type, base64: dataUrl.split(',')[1] };
+    $('#attach-img').src = dataUrl;
+    $('#attach-name').textContent = file.name;
+    $('#attach').hidden = false;
+    if (!$('#msg-input').value.trim()) {
+      $('#msg-input').value = 'Look at this photo of my circuit and tell me what you can see and what looks wrong.';
+    }
+  };
+  reader.onerror = function () { toast('Could not read that image.', 'err'); };
+  reader.readAsDataURL(file);
+}
+
+/* ═══════════════════════════════════════════════════════════ serial ══ */
+
+function serialSupported() { return typeof navigator !== 'undefined' && 'serial' in navigator; }
+
+function serialAdvice() {
+  var ua = navigator.userAgent || '';
+  if (serialSupported()) return '';
+  if (/Firefox/i.test(ua)) return 'Firefox does not support Web Serial. Use Chrome, Edge or Opera on a desktop, or download the file and use the editor for your board.';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS browsers cannot open a serial port. Download the file and transfer it from a desktop computer.';
+  if (/Safari/i.test(ua)) return 'Safari does not support Web Serial. Use Chrome or Edge on a desktop.';
+  return 'This browser does not support Web Serial. Use Chrome or Edge on a desktop computer.';
+}
+
+function serialLine(text, sent) {
+  var line = document.createElement('div');
+  line.className = 'serial-line' + (sent ? ' sent' : '');
+  line.innerHTML = '<span class="serial-time">' + new Date().toLocaleTimeString([], { hour12: false }) +
+    '</span><span class="serial-text">' + (sent ? '&gt; ' : '') + esc(text) + '</span>';
+  $('#serial-out').appendChild(line);
+  $('#serial-out').scrollTop = $('#serial-out').scrollHeight;
+  S.serial.lines.push(text);
+  if (S.serial.lines.length > 500) S.serial.lines.splice(0, S.serial.lines.length - 500);
+}
+
+function setSerialState(state, message) {
+  S.serial.state = state;
+  var map = {
+    unsupported: ['Serial not supported', 'warn'],
+    disconnected: ['Not connected', ''],
+    connecting: ['Connecting', 'info busy'],
+    connected: ['Board connected', 'ok'],
+    error: ['Connection error', 'err']
+  };
+  var m = map[state] || map.disconnected;
+  pill($('#pill-serial'), m[0], m[1]);
+  $('#btn-connect').disabled = (state === 'connected' || state === 'connecting');
+  $('#btn-disconnect').disabled = (state !== 'connected');
+  if (message) serialLine('[' + state + '] ' + message);
+}
+
+function serialConnect() {
+  if (!serialSupported()) { setSerialState('unsupported', serialAdvice()); toast(serialAdvice(), 'err'); return; }
+  setSerialState('connecting');
+  navigator.serial.requestPort({}).then(function (port) {
+    S.serial.port = port;
+    return port.open({ baudRate: 115200 });
+  }).then(function () {
+    setSerialState('connected');
+    serialLine('[connected] Reading serial at 115200 baud. This does not flash the board.');
+    S.serial.keep = true;
+    serialRead();
+    if (S.serial.port.writable) S.serial.writer = S.serial.port.writable.getWriter();
+  }, function (err) {
+    if (err && err.name === 'NotFoundError') { setSerialState('disconnected', 'No device was selected.'); return; }
+    var msg = String(err && err.message ? err.message : err);
+    if (/already open|in use|Failed to open/i.test(msg)) {
+      msg = 'The port is already in use. Close the MakeCode tab, the Arduino IDE or any other serial monitor, then try again.';
+    }
+    setSerialState('error', msg);
+  });
+}
+
+function serialRead() {
+  var decoder = new TextDecoderStream();
+  S.serial.port.readable.pipeTo(decoder.writable).catch(function () {});
+  S.serial.reader = decoder.readable.getReader();
+  function pump() {
+    S.serial.reader.read().then(function (res) {
+      if (res.done || !S.serial.keep) return;
+      S.serial.partial += res.value || '';
+      var parts = S.serial.partial.split(/\r?\n/);
+      S.serial.partial = parts.pop();
+      for (var i = 0; i < parts.length; i++) serialLine(parts[i]);
+      pump();
+    }, function () {
+      if (S.serial.keep) setSerialState('error', 'The connection dropped. Check the USB cable.');
+    });
+  }
+  pump();
+}
+
+function serialDisconnect() {
+  S.serial.keep = false;
+  var done = Promise.resolve();
+  if (S.serial.reader) done = S.serial.reader.cancel().catch(function () {});
+  done.then(function () {
+    try { if (S.serial.writer) { S.serial.writer.releaseLock(); S.serial.writer = null; } } catch (e) {}
+    try { if (S.serial.port) S.serial.port.close(); } catch (e) {}
+    S.serial.port = null;
+    setSerialState('disconnected');
+  });
+}
+
+/* ═════════════════════════════════════════════════════════ settings ══ */
+
+function applySettings() {
+  document.documentElement.style.setProperty('--font-scale', String(S.settings.fontScale));
+  document.body.classList.toggle('reduce-motion', !!S.settings.reduceMotion);
+  pill($('#pill-key'), S.apiKey ? 'API key saved' : 'No API key', S.apiKey ? 'ok' : 'warn');
+}
+
+function openSettings() {
+  var u = storageUsage(), html = '', i;
+  $('#set-key').value = S.apiKey;
+  $('#set-mode').value = S.settings.mode;
+  $('#set-motion').checked = !!S.settings.reduceMotion;
+  $('#set-monaco').checked = !!S.settings.useMonaco;
+  $('#set-font').value = String(S.settings.fontScale);
+  for (i = 0; i < GEMINI.choices.length; i++) {
+    html += '<option value="' + GEMINI.choices[i].id + '">' + esc(GEMINI.choices[i].label) + '</option>';
+  }
+  $('#storage-usage').textContent = u.chats + ' chat' + (u.chats === 1 ? '' : 's') +
+    ' saved in this browser, about ' + (u.bytes / 1024).toFixed(1) + ' KB.';
+  $('#key-result').textContent = '';
+  $('#dlg-settings').showModal();
+}
+
+function fillModels() {
+  var html = '', i, current = S.settings.model || GEMINI.model, found = false;
+  for (i = 0; i < GEMINI.choices.length; i++) {
+    if (GEMINI.choices[i].id === current) found = true;
+    html += '<option value="' + GEMINI.choices[i].id + '">' + esc(GEMINI.choices[i].label) + '</option>';
+  }
+  $('#model-select').innerHTML = html;
+  $('#model-select').value = found ? current : GEMINI.model;
+}
+
+/* ══════════════════════════════════════════════════════════ drawer ══ */
+
+function openDrawer(view) {
+  var d = $('#drawer');
+  d.classList.add('open');
+  d.setAttribute('aria-hidden', 'false');
+  if (view) {
+    $$('.drawer-tab').forEach(function (t) {
+      var on = t.getAttribute('data-view') === view;
+      t.classList.toggle('active', on);
+      if (on) t.removeAttribute('data-badge');
+    });
+    $$('.drawer-view').forEach(function (v) { v.classList.toggle('active', v.id === 'dv-' + view); });
+  }
+}
+function closeDrawer() {
+  $('#drawer').classList.remove('open');
+  $('#drawer').setAttribute('aria-hidden', 'true');
+}
+
+/* ════════════════════════════════════════════════════════════ chats ══ */
+
+function save() {
+  if (!S.chat) return;
+  if (S.chat.files[S.chat.activeFile]) S.chat.files[S.chat.activeFile].content = getCode();
+  saveChat(S.chat);
+}
+
+function applyChat(chat) {
+  S.chat = chat;
+  if (!S.chat.guide) S.chat.guide = { step: 0, hints: 0, attempts: 0, revealed: false };
+  if (!S.chat.files || !S.chat.files.length) S.chat.files = [{ name: LANGS[S.chat.language].file, content: '' }];
+  if (S.chat.activeFile >= S.chat.files.length) S.chat.activeFile = 0;
+
+  var b = getBoard(S.chat.board);
+  $('#board-chip').innerHTML = art(b.art) + '<span id="board-chip-name">' + esc(b.name) + '</span>';
+  fillLanguages();
+  $('#level-select').value = S.chat.level;
+  setCode(activeFile().content);
+  S.originalCode = activeFile().content;
+  renderFileTabs();
+  setEditorLanguage();
+  renderStarters();
+  renderBoardView();
+  renderChat();
+  updateGuide();
+  renderChatList();
+
+  if (S.chat.last) renderResponse(S.chat.last);
+  else {
+    renderPlan(EMPTY); renderParts(EMPTY); renderDiagram(EMPTY); renderChecks([]);
+    pill($('#pill-compile'), 'Not compiled', 'warn');
+  }
+}
+
+function startNewChat() {
+  save();
+  var c = newChat({ board: S.chat ? S.chat.board : 'microbit-v2', language: S.chat ? S.chat.language : null });
+  applyChat(c);
+  saveChat(c);
+  renderChatList();
+  $('#msg-input').focus();
+}
+
+/* ══════════════════════════════════════════════════════════ wiring ══ */
+
+function wire() {
+  /* sidebar */
+  $('#btn-new-chat').addEventListener('click', startNewChat);
+  $('#search-chats').addEventListener('input', renderChatList);
+  $('#chat-list').addEventListener('click', function (e) {
+    var del = e.target.closest ? e.target.closest('[data-del]') : null;
+    var item = e.target.closest ? e.target.closest('[data-chat]') : null;
+    if (del) {
+      e.stopPropagation();
+      if (!window.confirm('Delete this chat? This cannot be undone.')) return;
+      var id = del.getAttribute('data-del');
+      deleteChat(id);
+      if (S.chat.id === id) {
+        var rest = listChats();
+        applyChat(rest.length ? rest[0] : newChat({ board: S.chat.board }));
+        saveChat(S.chat);
+      }
+      renderChatList();
+      return;
+    }
+    if (item) {
+      var c = getChat(item.getAttribute('data-chat'));
+      if (c) { save(); applyChat(c); writeLS(KEYS.active, c.id); }
+    }
+  });
+  $('#file-list').addEventListener('click', function (e) {
+    var f = e.target.closest ? e.target.closest('[data-file]') : null;
+    if (f) switchFile(Number(f.getAttribute('data-file')));
+  });
+
+  /* editor */
+  $('#file-tabs').addEventListener('click', function (e) {
+    var close = e.target.closest ? e.target.closest('[data-fclose]') : null;
+    var tab = e.target.closest ? e.target.closest('[data-ftab]') : null;
+    if (close) {
+      e.stopPropagation();
+      var i = Number(close.getAttribute('data-fclose'));
+      if (S.chat.files.length < 2) return;
+      S.chat.files.splice(i, 1);
+      if (S.chat.activeFile >= S.chat.files.length) S.chat.activeFile = S.chat.files.length - 1;
+      setCode(activeFile().content);
+      renderFileTabs(); save();
+      return;
+    }
+    if (tab) switchFile(Number(tab.getAttribute('data-ftab')));
+  });
+  $$('[data-code]').forEach(function (b) {
+    b.addEventListener('click', function () { codeAction(b.getAttribute('data-code')); });
+  });
+  $('#code-area').addEventListener('input', function () { activeFile().content = $('#code-area').value; });
+  $('#btn-change-board').addEventListener('click', function () { showOnboard(1); });
+
+  /* chat + composer */
+  $('#composer').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('#msg-input').value;
+    $('#msg-input').value = '';
+    $('#msg-input').style.height = 'auto';
+    send(v);
+  });
+  $('#msg-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#composer').requestSubmit(); }
+  });
+  $('#msg-input').addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 190) + 'px';
+  });
+  $('#starters').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.starter') : null;
+    if (!b) return;
+    $('#msg-input').value = b.getAttribute('data-p');
+    $('#msg-input').focus();
+  });
+  $$('.mode[data-mode]').forEach(function (b) {
+    b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+  });
+  $('#guide-bar').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-guide]') : null;
+    if (b) doGuide(b.getAttribute('data-guide'));
+  });
+  $('#btn-attach').addEventListener('click', function () { $('#img-input').click(); });
+  $('#img-input').addEventListener('change', function (e) { handleImage(e.target.files[0]); });
+  $('#btn-attach-remove').addEventListener('click', clearImage);
+
+  $('#model-select').addEventListener('change', function (e) {
+    S.settings = saveSettings({ model: e.target.value });
+  });
+  $('#level-select').addEventListener('change', function (e) { S.chat.level = e.target.value; save(); });
+  $('#lang-select').addEventListener('change', function (e) {
+    S.chat.language = e.target.value;
+    if (S.chat.files.length === 1 && !S.chat.files[0].content.trim()) {
+      S.chat.files[0].name = LANGS[S.chat.language].file;
+      renderFileTabs();
+    }
+    setEditorLanguage(); save();
+  });
+
+  /* drawer */
+  $$('[data-drawer]').forEach(function (b) {
+    b.addEventListener('click', function () { openDrawer(b.getAttribute('data-drawer')); });
+  });
+  $$('.drawer-tab').forEach(function (t) {
+    t.addEventListener('click', function () { openDrawer(t.getAttribute('data-view')); });
+  });
+  $('#btn-drawer-close').addEventListener('click', closeDrawer);
+
+  /* serial */
+  $('#btn-connect').addEventListener('click', serialConnect);
+  $('#btn-disconnect').addEventListener('click', serialDisconnect);
+  $('#btn-serial-clear').addEventListener('click', function () {
+    S.serial.lines = []; $('#serial-out').innerHTML = '';
+  });
+  $('#btn-serial-chat').addEventListener('click', function () {
+    if (!S.serial.lines.length) { toast('No serial output yet. Connect the board first.'); return; }
+    $('#msg-input').value = 'Here is the serial output from my board. Help me work out what is going wrong.\n\n' +
+      S.serial.lines.slice(-40).join('\n');
+    closeDrawer();
+    $('#msg-input').focus();
+  });
+  $('#serial-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('#serial-in').value;
+    if (!v.trim()) return;
+    if (S.serial.state !== 'connected' || !S.serial.writer) { toast('Not connected to a board.', 'err'); return; }
+    S.serial.writer.write(new TextEncoder().encode(v + '\n')).then(function () {
+      serialLine(v, true); $('#serial-in').value = '';
+    }, function () { toast('Could not send to the board.', 'err'); });
+  });
+
+  /* dialogs */
+  $('#btn-settings').addEventListener('click', openSettings);
+  $('#btn-help').addEventListener('click', function () { $('#dlg-help').showModal(); });
+  $('#dlg-rules').addEventListener('close', function () {
+    if ($('#dlg-rules').returnValue !== 'save') return;
+    S.chat.rules = $('#rules-text').value.trim();
+    save();
+    toast(S.chat.rules ? 'Rules saved for this chat' : 'Rules cleared', 'ok');
+  });
+
+  $('#set-key').addEventListener('change', function (e) {
+    S.apiKey = e.target.value.trim(); setApiKey(S.apiKey); applySettings();
+  });
+  $('#btn-forget-key').addEventListener('click', function () {
+    S.apiKey = ''; setApiKey(''); $('#set-key').value = '';
+    $('#key-result').textContent = 'Key removed from this browser.';
+    applySettings();
+  });
+  $('#btn-test-key').addEventListener('click', function () {
+    var key = $('#set-key').value.trim(), out = $('#key-result');
+    if (!key) { out.textContent = 'Paste a key first.'; return; }
+    out.textContent = 'Testing...';
+    testKey(key, S.settings.model || GEMINI.model).then(function () {
+      S.apiKey = key; setApiKey(key); applySettings(); out.textContent = 'Key works.';
+    }, function (err) { out.textContent = err.message + ' ' + (err.hint || ''); });
+  });
+  $('#set-mode').addEventListener('change', function (e) {
+    S.settings = saveSettings({ mode: e.target.value });
+    setMode(e.target.value);
+    toast('New chats will start in ' + e.target.value + ' mode');
+  });
+  $('#set-motion').addEventListener('change', function (e) {
+    S.settings = saveSettings({ reduceMotion: e.target.checked }); applySettings();
+  });
+  $('#set-monaco').addEventListener('change', function (e) {
+    S.settings = saveSettings({ useMonaco: e.target.checked });
+    toast('Reload the page for this to take effect');
+  });
+  $('#set-font').addEventListener('input', function (e) {
+    S.settings = saveSettings({ fontScale: Number(e.target.value) }); applySettings();
+  });
+  $('#btn-export').addEventListener('click', function () {
+    save();
+    downloadText(exportAll(), 'makercode-chats-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json');
+  });
+  $('#btn-import').addEventListener('click', function () { $('#import-input').click(); });
+  $('#import-input').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try { toast('Imported ' + importJson(String(reader.result)) + ' chats', 'ok'); renderChatList(); }
+      catch (err) { toast(err.message, 'err'); }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+  $('#btn-clear-data').addEventListener('click', function () {
+    if (!window.confirm('Delete every saved chat, setting and the API key in this browser? This cannot be undone.')) return;
+    clearAllData();
+    S.settings = getSettings(); S.apiKey = '';
+    applySettings();
+    applyChat(newChat());
+    saveChat(S.chat);
+    $('#dlg-settings').close();
+    toast('All data cleared', 'ok');
+  });
+
+  /* small screens */
+  $$('[data-pane]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pane = b.getAttribute('data-pane');
+      $$('[data-pane]').forEach(function (x) { x.classList.toggle('active', x === b); });
+      $('#pane-chat').classList.toggle('shown', pane === 'chat');
+      $('#pane-editor').classList.toggle('shown', pane === 'editor');
+      if (S.monaco) S.monaco.layout();
+    });
+  });
+
+  /* shortcuts */
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 's') {
+      e.preventDefault(); save(); toast('Saved', 'ok');
+    }
+    if (e.key === 'Escape' && $('#drawer').classList.contains('open')) closeDrawer();
+  });
+  window.addEventListener('beforeunload', save);
+}
+
+/* ════════════════════════════════════════════════════════════ start ══ */
+
+function init() {
+  var existing = getActiveChat(), firstRun = !existing;
+
+  wireOnboard();
+  applyChat(existing || newChat());
+  fillModels();
+  applySettings();
+  wire();
+  setSerialState(serialSupported() ? 'disconnected' : 'unsupported');
+
+  loadMonaco().then(function (ok) {
+    if (!ok) {
+      $('#editor-note').textContent = S.settings.useMonaco
+        ? 'Plain text editor, the rich editor could not load'
+        : 'Plain text editor';
+    } else { setEditorLanguage(); }
+  });
+
+  if (firstRun) { saveChat(S.chat); showOnboard(1, true); }
+  else if (!S.apiKey) { showOnboard(2); }
+
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  }
+
+  if (window.console) console.info(APP.name + ' ' + APP.version + ' ready. Model: ' + (S.settings.model || GEMINI.model));
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+})();
+</script>
 </body>
 </html>
