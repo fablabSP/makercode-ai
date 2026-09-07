@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="MakerCode AI helps learners plan, wire, code and debug Arduino, ESP32 and BBC micro:bit projects.">
+<meta name="theme-color" content="#0B1020">
+<title>MakerCode AI</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip-link" href="#workspace">Skip to workspace</a>
+
+<!-- ───────────────────────────────────────────────────────── top bar ── -->
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="11" cy="11" r="2.4" fill="currentColor"/>
+      <circle cx="21" cy="11" r="2.4" fill="currentColor"/>
+      <path d="M10 20c2.6 2.6 9.4 2.6 12 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span class="brand-name">MakerCode<span class="brand-ai">AI</span></span>
+  </div>
+
+  <div class="topbar-controls">
+    <label class="field compact">
+      <span class="field-label">Board</span>
+      <select id="board-select" aria-label="Select your board"></select>
+    </label>
+
+    <label class="field compact">
+      <span class="field-label">Language</span>
+      <select id="language-select" aria-label="Select the programming language"></select>
+    </label>
+
+    <label class="field compact">
+      <span class="field-label">Level</span>
+      <select id="level-select" aria-label="Select the learner level">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </label>
+
+    <div class="socratic-toggle">
+      <input type="checkbox" id="socratic-toggle" class="switch-input">
+      <label for="socratic-toggle" class="switch">
+        <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+        <span class="switch-text">Socratic Mode</span>
+      </label>
+      <span id="socratic-state" class="switch-state" aria-live="polite">off</span>
+    </div>
+  </div>
+
+  <div class="topbar-actions">
+    <button type="button" class="btn ghost" id="btn-new">New</button>
+    <button type="button" class="btn ghost" id="btn-open">Open</button>
+    <button type="button" class="btn" id="btn-save">Save project</button>
+    <button type="button" class="btn icon-btn" id="btn-settings" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14 2h-4l-.5 2.6A7.6 7.6 0 0 0 6.9 6.1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5L10 22h4l.5-2.6a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="btn icon-btn" id="btn-help" aria-label="Help" title="Help">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.7v.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- key status strip, always visible -->
+<div class="statusbar" id="statusbar">
+  <span class="chip" id="chip-board">micro:bit V2</span>
+  <span class="chip" id="chip-mode" data-mode="direct">Direct mode</span>
+  <span class="chip warn" id="chip-compile">Not yet compiled</span>
+  <span class="chip" id="chip-connection" data-state="disconnected">Board disconnected</span>
+  <span class="chip" id="chip-key" data-state="missing">No API key</span>
+  <span class="statusbar-spacer"></span>
+  <span class="chip quiet" id="chip-project">Untitled project</span>
+</div>
+
+<main class="layout">
+
+  <!-- ────────────────────────────────────────────────────── left panel ── -->
+  <section class="panel panel-left" aria-label="AI assistant">
+    <div class="panel-head">
+      <h2>Assistant</h2>
+      <button type="button" class="btn tiny ghost" id="btn-clear-chat">Clear chat</button>
+    </div>
+
+    <div class="chat" id="chat" role="log" aria-live="polite" aria-label="Conversation with the assistant"></div>
+
+    <div class="socratic-controls" id="socratic-controls" hidden>
+      <div class="socratic-progress">
+        <span id="socratic-step-label">Step 1 of 10 — Trigger</span>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Socratic progress">
+          <div class="progress-fill" id="socratic-progress-fill"></div>
+        </div>
+      </div>
+      <div class="socratic-buttons">
+        <button type="button" class="btn tiny" data-socratic="hint">Give me a hint</button>
+        <button type="button" class="btn tiny" data-socratic="explain">Explain this concept</button>
+        <button type="button" class="btn tiny" data-socratic="check">Check my thinking</button>
+        <button type="button" class="btn tiny" data-socratic="step">Show one step</button>
+        <button type="button" class="btn tiny warnish" data-socratic="solution">Show solution</button>
+        <button type="button" class="btn tiny" data-socratic="similar">Try a similar challenge</button>
+      </div>
+    </div>
+
+    <div class="suggestions" id="suggestions" aria-label="Prompt suggestions"></div>
+
+    <form class="composer" id="composer">
+      <div class="attachment" id="attachment" hidden>
+        <img id="attachment-preview" alt="Preview of the image you are about to send">
+        <div class="attachment-meta">
+          <span id="attachment-name">image</span>
+          <button type="button" class="btn tiny ghost" id="btn-remove-image">Remove</button>
+        </div>
+      </div>
+
+      <label class="sr-only" for="prompt">Describe what you want to build</label>
+      <textarea id="prompt" rows="3" placeholder="Describe what you want to build, or ask a question about your circuit."></textarea>
+
+      <div class="composer-row">
+        <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp"
+               class="sr-only" tabindex="-1" aria-label="Choose an image of your circuit or code">
+        <button type="button" class="btn tiny ghost" id="btn-upload">Add image</button>
+        <button type="button" class="btn tiny ghost" id="btn-requirements">Requirements</button>
+        <button type="button" class="btn tiny ghost" id="btn-paste-serial">Paste serial</button>
+        <span class="composer-spacer"></span>
+        <button type="submit" class="btn primary" id="btn-send">Send</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ───────────────────────────────────────────────────── centre pane ── -->
+  <section class="panel panel-centre" id="workspace" aria-label="Project workspace">
+    <div class="tabs" role="tablist" aria-label="Workspace views">
+      <button role="tab" id="tab-plan" aria-controls="view-plan" aria-selected="true" class="tab active">Plan</button>
+      <button role="tab" id="tab-code" aria-controls="view-code" aria-selected="false" class="tab" tabindex="-1">Code</button>
+      <button role="tab" id="tab-diagram" aria-controls="view-diagram" aria-selected="false" class="tab" tabindex="-1">Diagram</button>
+      <button role="tab" id="tab-parts" aria-controls="view-parts" aria-selected="false" class="tab" tabindex="-1">Parts</button>
+      <button role="tab" id="tab-simulator" aria-controls="view-simulator" aria-selected="false" class="tab" tabindex="-1">Simulator</button>
+      <button role="tab" id="tab-serial" aria-controls="view-serial" aria-selected="false" class="tab" tabindex="-1">Serial Monitor</button>
+    </div>
+
+    <!-- Plan -->
+    <div role="tabpanel" id="view-plan" aria-labelledby="tab-plan" class="view active" tabindex="0">
+      <div class="view-inner" id="plan-body">
+        <div class="empty">
+          <h3>Nothing planned yet</h3>
+          <p>Describe your project in the assistant panel. The plan, parts list, pin assignments and testing steps appear here.</p>
+          <button type="button" class="btn" id="btn-try-example">Try the corridor light example</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code -->
+    <div role="tabpanel" id="view-code" aria-labelledby="tab-code" class="view" tabindex="0" hidden>
+      <div class="code-toolbar">
+        <button type="button" class="btn tiny" data-code="copy">Copy code</button>
+        <button type="button" class="btn tiny" data-code="download">Download</button>
+        <button type="button" class="btn tiny" data-code="reset">Reset</button>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <button type="button" class="btn tiny ghost" data-code="explain">Explain selection</button>
+        <button type="button" class="btn tiny ghost" data-code="findError">Find an error</button>
+        <button type="button" class="btn tiny ghost" data-code="improve">Improve this code</button>
+        <button type="button" class="btn tiny ghost" data-code="convert">Convert language</button>
+        <span class="toolbar-spacer"></span>
+        <a class="btn tiny ghost" id="link-makecode" href="https://makecode.microbit.org/" target="_blank" rel="noopener">Open MakeCode</a>
+      </div>
+      <div class="editor-shell">
+        <div id="monaco-host" class="monaco-host" hidden></div>
+        <label class="sr-only" for="code-fallback">Generated code</label>
+        <textarea id="code-fallback" class="code-fallback" spellcheck="false" placeholder="Generated code appears here."></textarea>
+      </div>
+      <p class="editor-note" id="editor-note">Editor: plain text. Nothing here has been compiled.</p>
+    </div>
+
+    <!-- Diagram -->
+    <div role="tabpanel" id="view-diagram" aria-labelledby="tab-diagram" class="view" tabindex="0" hidden>
+      <div class="view-inner" id="diagram-body"></div>
+    </div>
+
+    <!-- Parts -->
+    <div role="tabpanel" id="view-parts" aria-labelledby="tab-parts" class="view" tabindex="0" hidden>
+      <div class="view-inner" id="parts-body"></div>
+    </div>
+
+    <!-- Simulator -->
+    <div role="tabpanel" id="view-simulator" aria-labelledby="tab-simulator" class="view" tabindex="0" hidden>
+      <div class="view-inner" id="simulator-body"></div>
+    </div>
+
+    <!-- Serial -->
+    <div role="tabpanel" id="view-serial" aria-labelledby="tab-serial" class="view" tabindex="0" hidden>
+      <div class="code-toolbar">
+        <button type="button" class="btn tiny" id="btn-connect">Connect micro:bit</button>
+        <button type="button" class="btn tiny ghost" id="btn-disconnect" disabled>Disconnect</button>
+        <button type="button" class="btn tiny ghost" id="btn-clear-serial">Clear</button>
+        <button type="button" class="btn tiny ghost" id="btn-serial-to-chat">Send to assistant</button>
+        <span class="toolbar-spacer"></span>
+        <label class="inline-check">
+          <input type="checkbox" id="serial-autoscroll" checked>
+          <span>Auto scroll</span>
+        </label>
+      </div>
+      <div class="serial-console" id="serial-console" role="log" aria-live="off" aria-label="Serial output"></div>
+      <form class="serial-send" id="serial-form">
+        <label class="sr-only" for="serial-input">Send a line to the board</label>
+        <input type="text" id="serial-input" placeholder="Type a line to send to the board" autocomplete="off">
+        <button type="submit" class="btn tiny">Send</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────── right rail ── -->
+  <aside class="panel panel-right" aria-label="Board and project information">
+    <details class="rail" open>
+      <summary><h2>Board</h2></summary>
+      <div class="rail-body" id="rail-board"></div>
+    </details>
+
+    <details class="rail" open>
+      <summary><h2>Pin assignments</h2></summary>
+      <div class="rail-body" id="rail-pins">
+        <p class="muted">No pins assigned yet.</p>
+      </div>
+    </details>
+
+    <details class="rail" open>
+      <summary><h2>Checks</h2></summary>
+      <div class="rail-body" id="rail-checks">
+        <p class="muted">Pin checks appear once a design is generated.</p>
+      </div>
+    </details>
+
+    <details class="rail">
+      <summary><h2>Components</h2></summary>
+      <div class="rail-body" id="rail-components">
+        <p class="muted">No components yet.</p>
+      </div>
+    </details>
+
+    <details class="rail">
+      <summary><h2>Learning progress</h2></summary>
+      <div class="rail-body" id="rail-progress"></div>
+    </details>
+
+    <details class="rail" open>
+      <summary><h2>Before you power up</h2></summary>
+      <div class="rail-body" id="rail-safety">
+        <ul class="tick-list">
+          <li>Disconnect power before changing any wiring.</li>
+          <li>Check every connection against the pin table.</li>
+          <li>Test one function at a time.</li>
+          <li>AI-generated code can be wrong. Read it before you run it.</li>
+        </ul>
+      </div>
+    </details>
+  </aside>
+</main>
+
+<!-- ───────────────────────────────────────────────────────── dialogs ── -->
+
+<dialog id="dlg-requirements" class="dlg">
+  <form method="dialog" class="dlg-body">
+    <h2>Project requirements</h2>
+    <p class="muted">Fill in what you know. Anything you leave blank, the assistant will ask about.</p>
+
+    <label class="field">
+      <span class="field-label">Project name</span>
+      <input type="text" id="req-name" placeholder="Corridor light">
+    </label>
+    <label class="field">
+      <span class="field-label">Inputs — what the system senses</span>
+      <textarea id="req-inputs" rows="2" placeholder="PIR sensor, light level"></textarea>
+    </label>
+    <label class="field">
+      <span class="field-label">Processing — the rules it follows</span>
+      <textarea id="req-process" rows="2" placeholder="If movement and it is dark, switch on for 20 seconds"></textarea>
+    </label>
+    <label class="field">
+      <span class="field-label">Outputs — what it does</span>
+      <textarea id="req-outputs" rows="2" placeholder="Neopixel strip, buzzer"></textarea>
+    </label>
+    <label class="field">
+      <span class="field-label">Constraints — anything fixed</span>
+      <textarea id="req-constraints" rows="2" placeholder="Battery powered, must fit in a 10 cm box"></textarea>
+    </label>
+
+    <p class="note">Do not include names, photos or any personal information about students.</p>
+
+    <menu class="dlg-actions">
+      <button type="submit" value="cancel" class="btn ghost">Cancel</button>
+      <button type="submit" value="save" class="btn primary">Save requirements</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-settings" class="dlg">
+  <form method="dialog" class="dlg-body">
+    <h2>Settings</h2>
+
+    <label class="field">
+      <span class="field-label">Gemini API key</span>
+      <input type="password" id="set-key" placeholder="Paste your key" autocomplete="off">
+      <span class="field-help">
+        Stored in this browser only, never sent anywhere except Google. Get a free key at
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+        On a shared classroom computer, clear it when you finish.
+      </span>
+    </label>
+    <div class="row">
+      <button type="button" class="btn tiny" id="btn-test-key">Test key</button>
+      <button type="button" class="btn tiny ghost" id="btn-forget-key">Forget key</button>
+      <span id="key-result" class="field-help" aria-live="polite"></span>
+    </div>
+
+    <label class="field">
+      <span class="field-label">Model</span>
+      <select id="set-model"></select>
+      <span class="field-help">Lighter models cost less and answer faster. Heavier models plan better.</span>
+    </label>
+
+    <fieldset class="fieldset">
+      <legend>Learning</legend>
+      <label class="inline-check">
+        <input type="checkbox" id="set-socratic-default" checked>
+        <span>Start in Socratic Mode</span>
+      </label>
+      <span class="field-help">
+        On, the assistant asks questions and guides the learner to the answer.
+        Off, it gives complete solutions with the reasoning behind them.
+        This sets the default for new projects and switches the current one too.
+        The top bar toggle still overrides it at any time.
+      </span>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend>Display</legend>
+      <label class="inline-check"><input type="checkbox" id="set-motion"><span>Reduce motion</span></label>
+      <label class="inline-check"><input type="checkbox" id="set-safety" checked><span>Show safety notices</span></label>
+      <label class="field">
+        <span class="field-label">Text size</span>
+        <input type="range" id="set-font" min="0.9" max="1.35" step="0.05" value="1">
+      </label>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend>Project data</legend>
+      <p class="field-help" id="storage-usage"></p>
+      <div class="row wrap">
+        <button type="button" class="btn tiny" id="btn-export">Export all projects</button>
+        <button type="button" class="btn tiny" id="btn-import">Import from file</button>
+        <input type="file" id="import-input" accept="application/json"
+               class="sr-only" tabindex="-1" aria-label="Choose a project JSON file to import">
+        <button type="button" class="btn tiny danger" id="btn-clear-data">Clear project data</button>
+      </div>
+    </fieldset>
+
+    <menu class="dlg-actions">
+      <button type="submit" value="close" class="btn primary">Done</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-projects" class="dlg">
+  <form method="dialog" class="dlg-body">
+    <h2>Your projects</h2>
+    <div id="project-list" class="project-list"></div>
+    <menu class="dlg-actions">
+      <button type="submit" value="close" class="btn ghost">Close</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-help" class="dlg">
+  <form method="dialog" class="dlg-body">
+    <h2>How to use MakerCode AI</h2>
+
+    <h3>Getting started</h3>
+    <ol class="numbered">
+      <li>Pick your board, language and level in the top bar.</li>
+      <li>Add a Gemini API key in Settings. Without one you get the offline example only.</li>
+      <li>Describe what you want to build in your own words.</li>
+      <li>Socratic Mode starts on. Switch it off in the top bar, or in Settings, for full solutions.</li>
+      <li>Read the plan and the pin checks before you wire anything.</li>
+    </ol>
+
+    <h3>Socratic Mode</h3>
+    <p>This is on by default. The assistant does not hand over answers. It asks one question at a time and works through trigger, input, decision, output, structure, component, pin, test, edge case and improvement. Hints get stronger each time you ask. Show solution unlocks once you have made an attempt.</p>
+
+    <h3>What this app does not do</h3>
+    <ul class="tick-list">
+      <li>It does not compile code. Anything shown is marked as not yet compiled.</li>
+      <li>It does not flash your board. Download the file and use MakeCode or the Arduino IDE.</li>
+      <li>It cannot confirm that wiring is safe from a photograph.</li>
+    </ul>
+
+    <h3>Using it in class</h3>
+    <p>Each student needs their own API key, or one shared key will hit its rate limit quickly. Projects save to the browser they were made in and do not follow a student to another machine — export the JSON to move work.</p>
+
+    <h3>Responsible use</h3>
+    <ul class="tick-list">
+      <li>AI-generated code can contain mistakes. Verify wiring before applying power.</li>
+      <li>Test one function at a time.</li>
+      <li>A teacher should review anything safety critical, including mains, heat, motors and lithium cells.</li>
+      <li>Do not put personal information in prompts.</li>
+      <li>Do not upload images showing identifiable students without consent and approval.</li>
+    </ul>
+
+    <menu class="dlg-actions">
+      <button type="submit" value="close" class="btn primary">Close</button>
+    </menu>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

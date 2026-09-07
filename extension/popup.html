@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MakerCode AI</title>
+<style>
+  :root {
+    --bg: #0A0F1E; --surface: #18223B; --line: #27334F;
+    --text: #E9EEFA; --muted: #8593B2; --cyan: #2DD4E8; --purple: #A98BFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    width: 340px; margin: 0; padding: 14px;
+    background: var(--bg); color: var(--text);
+    font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+  }
+  h1 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%;
+         background: linear-gradient(120deg, var(--cyan), var(--purple)); }
+  label { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+  select, textarea, input {
+    width: 100%; font: inherit; color: var(--text);
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 9px; margin-bottom: 10px;
+  }
+  textarea { resize: vertical; min-height: 62px; }
+  button {
+    font: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
+    border-radius: 8px; padding: 7px 12px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--text);
+  }
+  button.primary { background: linear-gradient(120deg, #5B8DFF, var(--purple)); color: #05080F; border-color: transparent; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; }
+  #out {
+    margin-top: 10px; padding: 10px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--line);
+    font-size: 13px; max-height: 260px; overflow-y: auto; white-space: pre-wrap;
+  }
+  #out:empty { display: none; }
+  .note { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
+  a { color: var(--cyan); }
+</style>
+</head>
+<body>
+  <h1><span class="dot"></span> MakerCode AI</h1>
+
+  <label for="board">Board</label>
+  <select id="board">
+    <option value="microbit-v2">micro:bit V2</option>
+    <option value="microbit-v1">micro:bit V1</option>
+    <option value="arduino-uno">Arduino Uno</option>
+    <option value="arduino-nano">Arduino Nano</option>
+    <option value="arduino-mega">Arduino Mega</option>
+    <option value="esp32-dev">ESP32 dev board</option>
+  </select>
+
+  <label for="q">Quick question</label>
+  <textarea id="q" placeholder="Why does my servo jitter on P0?"></textarea>
+
+  <div class="row">
+    <button class="primary" id="ask">Ask</button>
+    <button id="open">Open full app</button>
+  </div>
+
+  <div id="out" role="status" aria-live="polite"></div>
+
+  <p class="note">
+    Quick answers only. Use the full app for plans, pin checks and code.
+    Set your API key and the app address on the
+    <a href="#" id="opts">options page</a>.
+  </p>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>
