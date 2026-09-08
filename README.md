@@ -206,6 +206,23 @@ Deliberate limits. The interface says so rather than pretending.
 - **It cannot confirm wiring is safe from a photo.** Image analysis says what it
   can see and labels anything unclear as uncertain.
 
+## Light and dark
+
+Settings has a theme picker: Dark, Light, or Match my device. Light mode is
+built for bright rooms and projectors, with its own text and line colours
+checked for contrast, and the circuit drawing repaints in a darker palette so it
+stays readable on white.
+
+## Hints cost nothing
+
+Rule out an option crosses out one wrong answer, in the browser. No API call, so
+it never touches your daily quota and still works if you have hit the limit. It
+will not remove the correct answer, and it stops once two options are left.
+
+Explain the idea does call the model. It teaches the concept behind the current
+question using a different example, so it does not hand over the answer, and it
+does not move the learner's progress.
+
 ## Teacher controls
 
 Students have no mode buttons. Click the MakerCode AI logo in the top left, or
@@ -330,7 +347,9 @@ adjustable.
 
 ## Privacy
 
-- Chats, settings and the API key stay in the browser's localStorage.
+- Chats, settings and the API key stay in the browser's localStorage. The key is
+  stored under a name with no version number in it, so updating the app never
+  loses it. Keys saved by older builds are migrated across on first load.
 - Prompts and any uploaded images go to Google's Gemini API. Nothing else leaves
   the machine.
 - Export and import moves chats between machines as a JSON file.
@@ -348,6 +367,7 @@ adjustable.
 | "Gemini is overloaded" or a server error | Google's end, not yours. It retried twice already. Press Try again, or pick a lighter model. |
 | Editor has no syntax colours | The rich editor loads from a CDN and could not reach it. The plain editor still works, and you can turn the rich one off in Settings. |
 | Chats vanished | localStorage is per browser and per profile. Private windows clear on close. |
+| Key gone after an update | Should not happen now. If you open `index.html` from a different folder each time, the browser treats that as a different site with its own storage. Serve it from one place, or from Pages. |
 | Pushed a change but the site looks the same | Service worker cache. Bump `CACHE` in `sw.js`, or hard reload. |
 | Pages shows a 404 | Wait a minute after enabling, and check branch `main` and folder `/ (root)`. |
 
