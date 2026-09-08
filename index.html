@@ -2257,6 +2257,9 @@ function systemInstruction(ctx) {
     parts.push('Build it on THEIR OWN ANSWERS, which are listed below. Where their answer decided something, say so:');
     parts.push('for example "you said the light should stay on for 20 seconds, so that is the number in the timer".');
     parts.push('Fill every field: "plan", "parts", "pins", "code", "explanation", "wiringSteps", "safetyWarnings", "testSteps", "debuggingSteps".');
+    parts.push('"parts" must be a list of OBJECTS, never plain strings, and must list every physical item needed, the board included. Exactly this shape:');
+    parts.push('"parts": [{"name": "PIR motion sensor", "quantity": 1, "purpose": "Detects movement in the room"}]');
+    parts.push('"pins" must also be a list of objects: {"component": "", "componentPin": "", "boardPin": "", "notes": ""}');
     parts.push('The comments in the code matter most of all here. This is the moment the learner reads code for the first time.');
     parts.push('End with "reflectionQuestion" asking them to explain one part back in their own words.');
     parts.push('Leave every quiz field empty. Set "assistantMode" to "socratic".');
@@ -2452,6 +2455,74 @@ function extractText(payload) {
   return out.trim();
 }
 
+/* Pick the first key that is present and not empty. */
+function pick(obj) {
+  var i, k, v;
+  for (i = 1; i < arguments.length; i++) {
+    k = arguments[i];
+    v = obj[k];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+  }
+  return '';
+}
+
+function readPart(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'string') {
+    /* "2x PIR sensor" or "PIR sensor - detects movement" */
+    var s = raw.trim();
+    if (!s) return null;
+    var qty = 1, m = s.match(/^(\d+)\s*(?:x|\*|times)?\s+(.*)$/i);
+    if (m) { qty = Number(m[1]) || 1; s = m[2]; }
+    var bits = s.split(/\s+[-\u2013\u2014:]\s+/);
+    return { name: bits[0].trim(), quantity: qty, purpose: (bits[1] || '').trim() };
+  }
+  if (typeof raw !== 'object') return null;
+  var name = pick(raw, 'name', 'part', 'component', 'item', 'title', 'label');
+  if (!name) return null;
+  var q = pick(raw, 'quantity', 'qty', 'count', 'amount', 'number');
+  return {
+    name: name,
+    quantity: Number(q) || 1,
+    purpose: pick(raw, 'purpose', 'description', 'desc', 'why', 'use', 'role', 'function', 'notes')
+  };
+}
+
+function readPin(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'string') {
+    /* "PIR OUT -> GPIO6" */
+    var m = raw.split(/\s*(?:->|=>|\u2192|to)\s*/i);
+    if (m.length < 2) return null;
+    var left = m[0].trim().split(/\s+/);
+    return { component: left.slice(0, -1).join(' ') || left[0], componentPin: left.length > 1 ? left[left.length - 1] : '',
+      boardPin: m[1].trim(), notes: '' };
+  }
+  if (typeof raw !== 'object') return null;
+  var comp = pick(raw, 'component', 'part', 'device', 'from', 'name');
+  var board = pick(raw, 'boardPin', 'board_pin', 'boardpin', 'to', 'pin', 'gpio', 'board');
+  if (!comp && !board) return null;
+  return {
+    component: comp,
+    componentPin: pick(raw, 'componentPin', 'component_pin', 'componentpin', 'fromPin', 'from_pin', 'leg', 'terminal'),
+    boardPin: board,
+    notes: pick(raw, 'notes', 'note', 'description', 'comment')
+  };
+}
+
+/* If a design exists but no parts list came back, build one from the wiring so
+   the panel is never blank when we plainly know what is connected. */
+function partsFromPins(pins) {
+  var seen = {}, out = [], i, name;
+  for (i = 0; i < pins.length; i++) {
+    name = pins[i].component;
+    if (!name || seen[name]) continue;
+    seen[name] = 1;
+    out.push({ name: name, quantity: 1, purpose: 'Listed from the wiring table.', derived: true });
+  }
+  return out;
+}
+
 function parseStructured(raw) {
   var text = String(raw || '').trim(), obj = null, start, end, out = {}, k, v, i;
   text = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
@@ -2472,20 +2543,12 @@ function parseStructured(raw) {
     else if (v !== null && v !== undefined && typeof v !== 'object') { out[k] = String(v); }
     else { out[k] = EMPTY[k]; }
   }
-  var parts = [];
-  for (i = 0; i < out.parts.length; i++) {
-    if (!out.parts[i] || typeof out.parts[i] !== 'object') continue;
-    parts.push({ name: String(out.parts[i].name || ''), quantity: Number(out.parts[i].quantity) || 1,
-      purpose: String(out.parts[i].purpose || '') });
-  }
-  out.parts = parts;
-  var pins = [];
-  for (i = 0; i < out.pins.length; i++) {
-    if (!out.pins[i] || typeof out.pins[i] !== 'object') continue;
-    pins.push({ component: String(out.pins[i].component || ''), componentPin: String(out.pins[i].componentPin || ''),
-      boardPin: String(out.pins[i].boardPin || ''), notes: String(out.pins[i].notes || '') });
-  }
-  out.pins = pins;
+  /* Models do not always return these two in the exact shape we asked for.
+     A lighter model may send plain strings, or use its own key names. Dropping
+     those silently left the Parts panel empty with no explanation, so accept
+     the common variations instead and only discard what is genuinely unusable. */
+  out.parts = out.parts.map(readPart).filter(Boolean);
+  out.pins = out.pins.map(readPin).filter(Boolean);
   var arrays = ['questions','plan','explanation','wiringSteps','safetyWarnings','testSteps','debuggingSteps'];
   for (i = 0; i < arrays.length; i++) out[arrays[i]] = out[arrays[i]].map(String).filter(Boolean);
   return out;
@@ -3033,8 +3096,21 @@ function renderPlan(r) {
 }
 
 function renderParts(r) {
-  var i, rows = '', notes = [], spec, j, out;
+  var i, rows = '', notes = [], spec, j, out, derived = false;
+
+  /* A design exists but no parts list came back. Build one from the wiring
+     rather than showing an empty panel next to finished code. */
+  if (!r.parts.length && r.pins.length) {
+    r = mergeResponse(r, { parts: partsFromPins(r.pins) });
+    derived = true;
+  }
   if (!r.parts.length) {
+    if (r.code) {
+      $('#dv-parts').innerHTML = calloutHtml('warn', '!', 'No parts list came back',
+        'There is code but no parts list, which means the reply left that field out. ' +
+        'Type "list the parts I need" in the chat and it will fill this in.');
+      return;
+    }
     $('#dv-parts').innerHTML =
       calloutHtml('info', 'i', 'What appears here',
         'The parts you need for what you described in the chat, with what each one is for, ' +
@@ -3051,7 +3127,10 @@ function renderParts(r) {
     spec = matchComponent(r.parts[i].name);
     if (spec) for (j = 0; j < spec.warnings.length; j++) if (notes.indexOf(spec.warnings[j]) === -1) notes.push(spec.warnings[j]);
   }
-  out = blockHtml('Parts list', r.parts.length + ' items',
+  out = (derived ? calloutHtml('warn', '!', 'Built from the wiring table',
+    'The assistant did not return a parts list this time, so this is the list of components ' +
+    'named in the wiring. Quantities and spare items may be missing. Ask "list the parts I need" to get a proper one.') : '') +
+    blockHtml('Parts list', r.parts.length + ' items',
     '<div class="table-wrap"><table><thead><tr><th>Qty</th><th>Part</th><th>What it does</th></tr></thead><tbody>' +
     rows + '</tbody></table></div>');
   if (notes.length) out += blockHtml('Component notes', '', listUl(notes));

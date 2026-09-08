@@ -126,6 +126,21 @@ Buttons above the message box, and a default you can set in Settings.
   guidance.
 - **Ask**. Short answers with no project plan attached.
 
+## When a panel looks empty
+
+The Parts and Diagram panels are filled from fields in the model's reply. Two
+things stop a blank panel being a mystery:
+
+- **Tolerant parsing.** Lighter models do not always return these in the exact
+  shape asked for. A parts list may come back as plain strings, or with keys
+  like `part`, `qty` and `description` instead of `name`, `quantity` and
+  `purpose`. All of those are read correctly now instead of being dropped.
+- **A fallback and a plain message.** If no parts list comes back but the wiring
+  did, the list is built from the components named in the wiring, with a banner
+  saying so. If nothing usable came back at all, the panel says that outright
+  and tells you to ask for the parts in the chat, rather than showing the
+  "nothing yet" placeholder next to finished code.
+
 ## My answers
 
 Every question and answer is stored on the chat, word for word. The My answers
