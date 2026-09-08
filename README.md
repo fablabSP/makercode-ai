@@ -62,6 +62,35 @@ their own key.
 The key is stored in that browser's localStorage. It goes to Google and nowhere
 else. There is no account and no server holding anyone's work.
 
+### Where the key is stored
+
+In `localStorage`, under `makercode.apiKey`. That name deliberately has no
+version number in it, so a new build never orphans it, and keys written by older
+builds are migrated across on first load.
+
+It is scoped to the site it was saved on. Three things lose it:
+
+- **Opening `index.html` from a different folder each time.** A `file://` page in
+  a new folder is a different site to the browser, with its own empty storage.
+  Serve it from one place, or from Pages, and this stops happening.
+- **A private or incognito window.** Cleared when the window closes.
+- **Clearing browser data**, or Clear all data in Settings. That one now asks
+  whether to keep the key.
+
+### Setting up a room full of machines
+
+Settings, then Your data, then Save setup file. It writes one small JSON file
+holding the key, both model choices, the theme and the teacher settings. On the
+next machine, Import a file, pick it, done. The same picker takes exported chats
+too and works out which kind it is.
+
+Untick Include the API key to share the setup without the secret, for example
+when every student is making their own key.
+
+A setup file with a key in it is a password in plain text. Put it on a USB stick
+or a drive you control. Do not email it round a class, and do not commit it. The
+`.gitignore` already excludes `makercode-setup*.json`.
+
 ### Running a class
 
 - Give every student their own key. One shared key hits its rate limit within
@@ -180,6 +209,39 @@ Two details that matter more than they look:
 Download drawing saves it as an SVG, so it can go into a worksheet or a report.
 
 It is a wiring guide, not a schematic, and it is not to scale.
+
+## Opening the circuit in Wokwi
+
+The drawing in this app is a wiring map: clear, honest about what it does not
+know, and generated offline. It is not a breadboard photo, and it does not
+simulate.
+
+For that, the Diagram panel exports a Wokwi `diagram.json`. Wokwi draws the real
+components on a breadboard, lets you drag them around, and runs your code.
+
+Press Open in Wokwi. The diagram is copied to your clipboard and Wokwi opens in
+a new tab. Paste it into the diagram.json tab there, paste your code into the
+code tab, and press play. Copy and Download buttons are there too if the
+clipboard is blocked.
+
+Board mapping:
+
+| Board here | Wokwi part |
+| --- | --- |
+| Arduino UNO | `wokwi-arduino-uno` |
+| Arduino Nano | `wokwi-arduino-nano` |
+| ESP32-WROOM-32U DevKitC | `wokwi-esp32-devkit-v1` |
+| ESP32-C3 Super Mini | `board-esp32-c3-devkitm-1`, the nearest C3 board |
+| ESP32-CAM | not supported by Wokwi |
+
+Components map to the real Wokwi parts: `wokwi-pir-motion-sensor`,
+`wokwi-neopixel`, `wokwi-servo`, `wokwi-hc-sr04`, `wokwi-potentiometer`,
+`wokwi-pushbutton`, `wokwi-buzzer`, `wokwi-led`, `board-ssd1306` and others.
+
+Anything that cannot be mapped is listed in the panel rather than dropped, so
+you know exactly what to wire by hand once Wokwi opens. A part with no Wokwi
+equivalent, and anything on a separate supply, is always listed there, since
+Wokwi has no second power supply to connect to.
 
 ## The pin checker
 
