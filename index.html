@@ -535,6 +535,12 @@ tbody tr:last-child td { border-bottom: 0; }
 .rec-yours { font-size: .84rem; margin-bottom: 8px; color: var(--text-2); }
 .rec-why { font-size: .83rem; color: var(--text-2); border-top: 1px solid var(--line-soft); padding-top: 7px; margin-bottom: 8px; }
 
+.usage-note {
+  font-size: .72rem; color: var(--muted); font-weight: 600;
+  border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; white-space: nowrap;
+}
+select option:disabled { color: var(--muted); font-style: italic; }
+
 /* ============================================================= dialogs == */
 dialog {
   border: 1px solid var(--line); border-radius: var(--r-xl);
@@ -762,8 +768,9 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
         </div>
 
         <div class="model-row">
-          <label for="model-select">Model</label>
+          <label for="model-select">Questions use</label>
           <select id="model-select"></select>
+          <span class="usage-note" id="usage-note"></span>
           <span class="spacer"></span>
           <label for="level-select">Level</label>
           <select id="level-select" title="How much programming experience the learner has">
@@ -896,10 +903,36 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
         <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</span>
     </label>
     <div class="row wrap">
-      <button type="button" class="btn tiny" id="btn-test-key">Test key</button>
+      <button type="button" class="btn tiny" id="btn-test-key">Test key and model</button>
       <button type="button" class="btn tiny ghost" id="btn-forget-key">Forget key</button>
       <span class="field-help" id="key-result" aria-live="polite"></span>
     </div>
+
+    <fieldset>
+      <legend>Models</legend>
+      <label class="field">
+        <span class="field-label">For the ten questions</span>
+        <select id="set-model"></select>
+        <span class="field-help" id="set-model-note"></span>
+      </label>
+      <label class="field">
+        <span class="field-label">For the final program, and Build mode</span>
+        <select id="set-code-model"></select>
+        <span class="field-help" id="set-code-model-note"></span>
+      </label>
+      <div class="row wrap">
+        <button type="button" class="btn tiny" id="btn-test-code-model">Check this model works</button>
+        <span class="field-help" id="code-model-result" aria-live="polite"></span>
+      </div>
+      <p class="field-help" id="usage-detail"></p>
+      <p class="note">
+        The daily allowances shown next to each model are a rough guide, not a promise.
+        Google no longer publishes a per-model free-tier figure, and quotas were cut sharply
+        at the end of 2025. Your real numbers are on your
+        <a href="https://aistudio.google.com/rate-limit" target="_blank" rel="noopener">AI Studio rate limit page</a>.
+        Check them before a lesson.
+      </p>
+    </fieldset>
 
     <fieldset id="teacher-controls">
       <legend>Teacher controls</legend>
@@ -1021,20 +1054,37 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
 var APP = { name: 'MakerCode AI', version: '2.0.0' };
 
 var GEMINI = {
-  /* Change this one value to switch models. Verified model IDs:
-     gemini-3.8-flash    current Flash, best reasoning
-     gemini-3.7-flash    previous Flash, fully supported
-     gemini-3.6-flash    cheapest, fine for classroom volume
-     gemini-flash-latest rolling alias, moves without warning          */
-  model: 'gemini-3.8-flash',
+  /* Model used for the ten Socratic questions. This is the one that runs
+     ten-plus times per project, so it is the one that eats your daily quota. */
+  model: 'gemini-3.5-flash-lite',
+
+  /* Model used for the final program, and for Build and Ask mode. Runs once
+     per project, so it is worth spending a stronger model on. */
+  codeModel: 'gemini-3.5-flash',
+
+  /* Google stopped publishing per-model free-tier RPD in the docs. Limits are
+     now per account and only visible at aistudio.google.com/rate-limit, and
+     they were cut sharply in December 2025. The "rpd" strings below are a
+     RELATIVE guide, not a promise. Check your own number before a lesson.
+     Model IDs retire; the Test button in Settings checks whether one is live. */
   choices: [
-    { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
-    { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
-    { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
-    { id: 'gemini-flash-latest', label: 'Gemini Flash (latest)' }
+    { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite',
+      rpd: 'highest daily allowance', note: 'Fastest and cheapest. Built for high volume.' },
+    { id: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash-Lite',
+      rpd: 'high daily allowance', note: 'Stronger reasoning than 3.5 Lite, still cheap.' },
+    { id: 'gemma-4-31b-it', label: 'Gemma 4 31B',
+      rpd: 'own quota, open model', note: 'Open weights, Apache 2.0. Can be self-hosted later.' },
+    { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash',
+      rpd: 'lower daily allowance', note: 'Best at coding. Use for the final program.' },
+    { id: 'gemini-flash-latest', label: 'Gemini Flash (latest)',
+      rpd: 'lower daily allowance', note: 'Rolling alias. Moves without warning.' },
+    { id: '', label: 'Gemini 3.1 Flash Live', disabled: true,
+      rpd: 'not usable here', note: 'Live API model. It needs a websocket audio session, not the request this app sends.' }
   ],
+
   base: 'https://generativelanguage.googleapis.com',
   version: 'v1beta',
+  rateLimitPage: 'https://aistudio.google.com/rate-limit',
   temperature: 0.35,
   maxOutputTokens: 8192,
   timeoutMs: 90000,
@@ -1055,6 +1105,7 @@ var FEATURES = {
 };
 
 var KEYS = {
+  usage: 'makercode.usage.v2',
   chats: 'makercode.chats.v2',
   active: 'makercode.active.v2',
   settings: 'makercode.settings.v2',
@@ -1654,7 +1705,8 @@ function writeLS(key, value) {
 }
 
 var DEFAULT_SETTINGS = {
-  model: '', mode: 'socratic', reduceMotion: false, useMonaco: true, fontScale: 1,
+  model: '', codeModel: '', mode: 'socratic', reduceMotion: false, useMonaco: true,
+  fontScale: 1,
   modeButtons: false   // teacher setting: show the mode buttons to students
 };
 
@@ -1749,6 +1801,28 @@ function storageUsage() {
     var raw = localStorage.getItem(KEYS.chats) || '';
     return { bytes: raw.length, chats: listChats().length };
   } catch (e) { return { bytes: 0, chats: 0 }; }
+}
+
+/* The API will not tell us how much quota is left, so count locally instead.
+   Google's day boundary is midnight Pacific, so use that, not the local date. */
+function usageDay() {
+  var d = new Date();
+  var pacific = new Date(d.getTime() - 8 * 3600 * 1000);
+  return pacific.toISOString().slice(0, 10);
+}
+
+function getUsage() {
+  var u = readLS(KEYS.usage, null);
+  if (!u || u.day !== usageDay()) u = { day: usageDay(), count: 0, byModel: {} };
+  return u;
+}
+
+function noteRequest(model) {
+  var u = getUsage();
+  u.count++;
+  u.byModel[model] = (u.byModel[model] || 0) + 1;
+  writeLS(KEYS.usage, u);
+  return u;
 }
 
 /* ═════════════════════════════════════════════════════ pin validator ══ */
@@ -2152,8 +2226,9 @@ function classify(status, body) {
       'Check the key restrictions, or pick a different model in Settings.');
   }
   if (status === 404) {
-    return new GeminiError('That model name was not found.', 'model', status,
-      'Pick another model in Settings. Model names retire without much notice.');
+    return new GeminiError('That model is not available to your key.', 'model', status,
+      'Either the name has retired, or your key cannot reach this model. Pick another one in Settings ' +
+      'and press Test, which checks the model as well as the key. Model names change without much notice.');
   }
   if (status === 429) {
     return new GeminiError('You have sent too many requests for now.', 'rate', status,
@@ -2280,7 +2355,11 @@ function generate(ctx) {
     return Promise.reject(new GeminiError('No API key saved yet.', 'nokey', 0,
       'Open Settings and paste a Gemini API key. It is free to make one.'));
   }
-  var model = ctx.model || GEMINI.model;
+  /* The ten questions run on the cheap model. The final program, and Build and
+     Ask mode, run on the stronger one. Ten cheap calls plus one good call costs
+     far less quota than eleven good ones, and puts the quality where it counts. */
+  var model = ctx.model || (ctx.wantsCode ? GEMINI.codeModel : GEMINI.model);
+  noteRequest(model);
   var body = {
     systemInstruction: { parts: [{ text: systemInstruction(ctx) }] },
     contents: buildContents(ctx),
@@ -3396,11 +3475,15 @@ function send(text, opts) {
   var typing = showTyping();
   var step = guideStep(owner.guide);
   var ctx = {
-    apiKey: S.apiKey, model: S.settings.model || GEMINI.model,
+    apiKey: S.apiKey,
     boardId: owner.board, language: owner.language, level: owner.level,
     mode: owner.mode, rules: owner.rules,
     history: owner.messages.slice(0, -1), image: S.image,
     code: owner.mode === 'ask' ? '' : getCode(),
+    wantsCode: !!opts.finalSolution || owner.mode === 'build',
+    model: (opts.finalSolution || owner.mode === 'build')
+      ? (S.settings.codeModel || GEMINI.codeModel)
+      : (S.settings.model || GEMINI.model),
     stepNumber: Math.min((owner.guide.step || 0) + 1, STEPS.length),
     stepTotal: FEATURES.questionsBeforeCode,
     stepLabel: step.label, stepQuestion: step.q,
@@ -3449,6 +3532,7 @@ function send(text, opts) {
     clearImage();
     save();
     renderChatList();
+    renderUsage();
     /* fired here, not in the handler above, because the turn is only free now */
     if (mine()) maybeFinalSolution();
   });
@@ -3634,18 +3718,56 @@ function openSettings() {
   }
   $('#storage-usage').textContent = u.chats + ' chat' + (u.chats === 1 ? '' : 's') +
     ' saved in this browser, about ' + (u.bytes / 1024).toFixed(1) + ' KB.';
+
+  var q = modelOptions(S.settings.model || GEMINI.model, GEMINI.model);
+  $('#set-model').innerHTML = q.html;
+  $('#set-model').value = q.value;
+  $('#set-model-note').textContent = modelNote(q.value);
+
+  var c = modelOptions(S.settings.codeModel || GEMINI.codeModel, GEMINI.codeModel);
+  $('#set-code-model').innerHTML = c.html;
+  $('#set-code-model').value = c.value;
+  $('#set-code-model-note').textContent = modelNote(c.value);
+
+  var us = getUsage(), lines = [], k;
+  for (k in us.byModel) lines.push(k + ': ' + us.byModel[k]);
+  $('#usage-detail').textContent = us.count
+    ? us.count + ' requests today (' + lines.join(', ') + ')'
+    : 'No requests sent today.';
   $('#key-result').textContent = '';
   $('#dlg-settings').showModal();
 }
 
-function fillModels() {
-  var html = '', i, current = S.settings.model || GEMINI.model, found = false;
+function modelOptions(current, fallback) {
+  var html = '', i, c, found = false;
   for (i = 0; i < GEMINI.choices.length; i++) {
-    if (GEMINI.choices[i].id === current) found = true;
-    html += '<option value="' + GEMINI.choices[i].id + '">' + esc(GEMINI.choices[i].label) + '</option>';
+    c = GEMINI.choices[i];
+    if (c.id === current) found = true;
+    html += '<option value="' + esc(c.id) + '"' + (c.disabled ? ' disabled' : '') + '>' +
+      esc(c.label) + ' \u00b7 ' + esc(c.rpd) + '</option>';
   }
-  $('#model-select').innerHTML = html;
-  $('#model-select').value = found ? current : GEMINI.model;
+  return { html: html, value: found ? current : fallback };
+}
+
+function fillModels() {
+  var m = modelOptions(S.settings.model || GEMINI.model, GEMINI.model);
+  $('#model-select').innerHTML = m.html;
+  $('#model-select').value = m.value;
+  renderUsage();
+}
+
+function renderUsage() {
+  var u = getUsage(), el = $('#usage-note');
+  if (!el) return;
+  el.textContent = u.count + ' request' + (u.count === 1 ? '' : 's') + ' today';
+  el.title = 'Counted in this browser since midnight Pacific, which is when Google resets the daily quota. ' +
+    'It is what this app has sent, not what your account has left.';
+}
+
+function modelNote(id) {
+  var i;
+  for (i = 0; i < GEMINI.choices.length; i++) if (GEMINI.choices[i].id === id) return GEMINI.choices[i].note;
+  return '';
 }
 
 /* ══════════════════════════════════════════════════════════ drawer ══ */
@@ -3829,6 +3951,7 @@ function wire() {
 
   $('#model-select').addEventListener('change', function (e) {
     S.settings = saveSettings({ model: e.target.value });
+    toast('Questions will use ' + e.target.options[e.target.selectedIndex].text.split(' \u00b7 ')[0]);
   });
   $('#level-select').addEventListener('change', function (e) { S.chat.level = e.target.value; save(); });
   $('#lang-select').addEventListener('change', function (e) {
@@ -3904,6 +4027,24 @@ function wire() {
       S.apiKey = key; setApiKey(key); applySettings(); out.textContent = 'Key works.';
     }, function (err) { out.textContent = err.message + ' ' + (err.hint || ''); });
   });
+  $('#set-model').addEventListener('change', function (e) {
+    S.settings = saveSettings({ model: e.target.value });
+    $('#set-model-note').textContent = modelNote(e.target.value);
+    fillModels();
+  });
+  $('#set-code-model').addEventListener('change', function (e) {
+    S.settings = saveSettings({ codeModel: e.target.value });
+    $('#set-code-model-note').textContent = modelNote(e.target.value);
+  });
+  $('#btn-test-code-model').addEventListener('click', function () {
+    var out = $('#code-model-result');
+    if (!S.apiKey) { out.textContent = 'Save a key first.'; return; }
+    out.textContent = 'Checking...';
+    testKey(S.apiKey, $('#set-code-model').value).then(function () {
+      out.textContent = 'This model is available to your key.';
+    }, function (err) { out.textContent = err.message + ' ' + (err.hint || ''); });
+  });
+
   if ($('#set-mode')) $('#set-mode').addEventListener('change', function (e) {
     S.settings = saveSettings({ mode: e.target.value });
     setMode(e.target.value);

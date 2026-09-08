@@ -256,18 +256,70 @@ Board photos are downscaled to fit a 260 px box, encoded as WebP and embedded as
 data URIs. That is about 47 KB in total and keeps the app to one file that works
 offline.
 
-## Changing the model
+## Models and daily quota
+
+Two models, chosen by task, because the ten questions are what eat quota:
+
+| Used for | Default | Why |
+| --- | --- | --- |
+| The ten questions | Gemini 3.5 Flash-Lite | Runs ten-plus times per project. Cheapest, fastest, highest allowance. |
+| The final program, Build, Ask | Gemini 3.5 Flash | Runs once per project. Best of the Flash line at coding. |
+
+Ten cheap calls plus one good call costs far less quota than eleven good ones,
+and puts the quality where it actually matters. Both are changeable in Settings.
+
+Available options:
+
+| Model | ID | Allowance | Notes |
+| --- | --- | --- | --- |
+| Gemini 3.5 Flash-Lite | `gemini-3.5-flash-lite` | highest | Fastest and cheapest, built for high volume |
+| Gemini 3.1 Flash-Lite | `gemini-3.1-flash-lite` | high | Stronger reasoning than 3.5 Lite, still cheap |
+| Gemma 4 31B | `gemma-4-31b-it` | own quota | Open weights, Apache 2.0, can be self-hosted |
+| Gemini 3.5 Flash | `gemini-3.5-flash` | lower | Best at coding |
+| Gemini Flash (latest) | `gemini-flash-latest` | lower | Rolling alias, moves without warning |
+| Gemini 3.1 Flash Live | n/a | not usable | Live API model, see below |
+
+### About those allowances
+
+They are a **relative guide, not a promise**. Google stopped publishing a
+per-model free-tier RPD figure in its rate limits documentation. The page now
+says limits depend on your tier and account, that they can be viewed in AI
+Studio, and that "specified rate limits are not guaranteed". Free tier quotas
+were also cut sharply at the end of 2025, and third-party articles quoting exact
+RPD numbers disagree with each other by a factor of six.
+
+So the app does two honest things instead of printing a number it cannot verify:
+
+- Links you to your own [AI Studio rate limit page](https://aistudio.google.com/rate-limit),
+  which is the only authoritative source for your account.
+- Counts the requests it has sent since midnight Pacific, which is when Google's
+  daily quota resets, and shows the running total next to the model picker.
+  That is measured, not guessed. It tells you what you have used, not what you
+  have left.
+
+Check your real numbers before a lesson.
+
+### Why Gemini 3.1 Flash Live is listed but disabled
+
+It is a **Live API** model, built for real-time voice dialogue over a websocket
+session. This app sends a normal `generateContent` request over HTTPS. The two
+are different transports, so selecting it would fail every time. It is left in
+the list, greyed out with the reason, rather than quietly dropped.
+
+### Changing the defaults
 
 Near the top of the script:
 
 ```js
 var GEMINI = {
-  model: 'gemini-3.8-flash',
+  model: 'gemini-3.5-flash-lite',   // the ten questions
+  codeModel: 'gemini-3.5-flash',    // the final program
   ...
 ```
 
-Model IDs retire. When requests start failing with a 404, change that one value.
-Users can also pick from the dropdown next to the message box.
+Model IDs retire. Test key and model in Settings checks the key, and Check this
+model works checks the code model, so you can confirm both before a lesson
+rather than finding out mid-class.
 
 ## Accessibility
 
