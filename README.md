@@ -106,22 +106,45 @@ each expansion board socket back to that GPIO before wiring.
 
 Buttons above the message box, and a default you can set in Settings.
 
-- **Socratic** (default). It tests what the learner understands rather than
-  explaining at them. Most replies end with a multiple choice question that asks
-  them to predict a behaviour ("the button is pressed, what happens to the
-  LED?"), read a consequence, or spot a fault. Wrong options are drawn from
-  mistakes learners actually make. Answers are graded instantly in the browser,
-  the reason is shown, and the result is passed on so the assistant can clear up
-  that specific misunderstanding and ask again rather than moving on. Open
-  questions are used where a short choice will not do. The learner can also ask
-  their own clarifying questions at any point. It works through trigger, input,
-  decision, output, structure, component, pin, test, edge case, improvement.
-  Hints get stronger each time you press: small hint, stronger hint, partial
-  worked example. Show solution stays locked until the learner has made a real
-  attempt.
+- **Socratic** (default). Ten questions, one at a time, in a fixed order:
+  trigger, input, decision, output, structure, component, pin, test, edge case,
+  improvement. Most are multiple choice and ask the learner to predict a
+  behaviour ("the button is pressed, what happens to the LED?"), read a
+  consequence, or spot a fault. Some are open questions in their own words.
+
+  **There is no way to skip to the code.** No Show solution button, no Show one
+  step. Once all ten are answered the complete commented program is written
+  automatically, built on the learner's own answers, saying things like "you
+  said the light stays on for 20 seconds, so that is the number in the timer".
+
+  Progress is earned, not counted. A wrong answer stays on the same question and
+  the assistant comes at the idea from a different angle, so ten answered means
+  ten understood. After three tries on one question it moves on anyway, so
+  nobody gets stuck in a loop.
+
 - **Build**. The complete solution with reasoning, testing steps and debugging
   guidance.
 - **Ask**. Short answers with no project plan attached.
+
+## My answers
+
+Every question and answer is stored on the chat, word for word. The My answers
+panel shows each one with the options, which the learner picked, which was
+correct, and why. Ask about this on any entry sends it back to the assistant
+with the exact wording, so the explanation is about the real question rather
+than a reconstruction of it. That is the self-revision part: a learner can come
+back a week later and work out why an answer was right.
+
+Two things protect accuracy, because a saved record that teaches something wrong
+is worse than no record:
+
+- The assistant is told that every question is saved for revision, that the
+  correct option must be checkably correct for the selected board, that no
+  question may have two defensible answers, and that it should not build a
+  question on a fact it is unsure of.
+- If the stated correct answer does not match any of the options, the app
+  refuses to grade it. The question becomes an open one instead of quietly
+  marking a learner wrong against a broken key.
 
 ## The circuit drawing
 
@@ -183,22 +206,35 @@ Deliberate limits. The interface says so rather than pretending.
 - **It cannot confirm wiring is safe from a photo.** Image analysis says what it
   can see and labels anything unclear as uncertain.
 
+## Teacher controls
+
+Students have no mode buttons. Click the MakerCode AI logo in the top left, or
+open Settings, and there is a Teacher controls box:
+
+- **Mode.** Socratic, Build or Ask, for the whole app.
+- **Let students switch mode themselves.** Off by default. Turning it on puts the
+  three mode buttons back above the message box.
+
+There is no password on it. If you are handing machines to a class and want it
+properly locked, the honest options are to set it once per machine, or to add a
+PIN check on `#btn-teacher`, which is a few lines.
+
 ## Turning things on and off
 
 Near the top of the script:
 
 ```js
 var FEATURES = {
-  serialMonitor: false,   // Web Serial panel
-  modeInSettings: false,  // mode dropdown in Settings
-  showAllBoards: false    // every board profile, not just the five in use
+  serialMonitor: false,      // Web Serial panel
+  showAllBoards: false,      // every board profile, not just the five in use
+  questionsBeforeCode: 10,   // questions to answer before the code is written
+  maxTriesPerQuestion: 3     // tries on one question before it moves on anyway
 };
 ```
 
-The serial monitor is hidden and the mode dropdown has been taken out of
-Settings, so Socratic is simply the default and the three buttons above the
-message box are the only place to change it. The serial code is still there and
-switching the flag brings the panel back.
+Set `questionsBeforeCode` lower for a shorter lesson. The serial monitor is
+hidden but the code is still there, so flipping that flag brings the panel
+back.
 
 ## Files
 
@@ -214,7 +250,7 @@ switching the flag brings the panel back.
 Inside `index.html` the script is in labelled sections: config and feature
 flags, board photos, board illustrations, board profiles, component library,
 storage, pin validator, socratic engine, gemini service, then the UI (board
-picker, circuit diagram, quizzes, chat).
+picker, circuit diagram, the answer record, quizzes, chat).
 
 Board photos are downscaled to fit a 260 px box, encoded as WebP and embedded as
 data URIs. That is about 47 KB in total and keeps the app to one file that works

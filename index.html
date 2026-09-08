@@ -500,6 +500,41 @@ tbody tr:last-child td { border-bottom: 0; }
 /* -------- composer labels */
 .model-row label { font-size: .74rem; font-weight: 650; color: var(--muted); }
 
+/* -------- guided bar extras */
+.guide-count { font-size: .72rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.guide-note { margin: 8px 0 0; font-size: .76rem; color: var(--muted); }
+.brand-btn {
+  background: transparent; border: 0; padding: 0; cursor: pointer;
+  color: var(--blue); display: block; line-height: 0;
+}
+.brand-btn:hover { color: var(--cyan); }
+
+/* -------- the answer record */
+.rec {
+  border: 1px solid var(--line); border-left-width: 3px;
+  border-radius: var(--r-md); padding: 11px 13px; margin-bottom: 11px; background: var(--panel-2);
+}
+.rec-ok { border-left-color: var(--ok); }
+.rec-err { border-left-color: var(--warn); }
+.rec-neutral { border-left-color: var(--line); }
+.rec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.rec-step { font-size: .68rem; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.rec-mark {
+  margin-left: auto; font-size: .68rem; font-weight: 750;
+  padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line);
+}
+.rec-mark.ok { color: var(--ok); border-color: rgba(52,211,153,.45); background: var(--ok-bg); }
+.rec-mark.err { color: var(--warn); border-color: rgba(251,191,36,.45); background: var(--warn-bg); }
+.rec-mark.neutral { color: var(--muted); }
+.rec-q { font-weight: 650; font-size: .88rem; margin-bottom: 8px; }
+.rec-opts { list-style: none; margin: 0 0 8px; padding: 0; font-size: .82rem; }
+.rec-opts li { padding: 3px 8px; border-radius: var(--r-sm); color: var(--text-2); }
+.rec-opts li.right { background: var(--ok-bg); color: var(--ok); }
+.rec-opts li.wrong { background: var(--err-bg); color: var(--err); }
+.rec-opts em { color: var(--muted); font-style: normal; font-size: .74rem; }
+.rec-yours { font-size: .84rem; margin-bottom: 8px; color: var(--text-2); }
+.rec-why { font-size: .83rem; color: var(--text-2); border-top: 1px solid var(--line-soft); padding-top: 7px; margin-bottom: 8px; }
+
 /* ============================================================= dialogs == */
 dialog {
   border: 1px solid var(--line); border-radius: var(--r-xl);
@@ -593,6 +628,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
   <aside class="sidebar" id="sidebar">
     <div class="side-head">
       <div class="brand">
+        <button type="button" class="brand-btn" id="btn-teacher" title="Teacher controls" aria-label="Teacher controls">
         <svg viewBox="0 0 32 32" aria-hidden="true">
           <rect x="4" y="4" width="24" height="24" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
           <circle cx="12" cy="13" r="2.2" fill="currentColor"/>
@@ -600,6 +636,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
           <path d="M11 20c2.6 2.4 8.4 2.4 11 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           <path d="M4 11H1M4 16H1M4 21H1M31 11h-3M31 16h-3M31 21h-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
+        </button>
         <span class="brand-name">MakerCode AI</span>
       </div>
       <button type="button" class="btn primary wide" id="btn-new-chat">+ New chat</button>
@@ -685,17 +722,17 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
 
     <div class="guide-bar" id="guide-bar" hidden>
       <div class="guide-top">
-        <span class="guide-step" id="guide-step">Step 1 of 10 &middot; Trigger</span>
+        <span class="guide-step" id="guide-step">Question 1 of 10 &middot; Trigger</span>
         <div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Guided progress"><i id="guide-fill"></i></div>
+        <span class="guide-count" id="guide-count">0 answered</span>
       </div>
       <div class="guide-btns">
         <button type="button" class="btn tiny" data-guide="hint">Give me a hint</button>
         <button type="button" class="btn tiny" data-guide="explain">Explain this concept</button>
         <button type="button" class="btn tiny" data-guide="check">Check my thinking</button>
-        <button type="button" class="btn tiny" data-guide="step">Show one step</button>
-        <button type="button" class="btn tiny" data-guide="solution">Show solution</button>
-        <button type="button" class="btn tiny ghost" data-guide="similar">Similar challenge</button>
+        <button type="button" class="btn tiny ghost" data-drawer="review">My answers</button>
       </div>
+      <p class="guide-note" id="guide-note">Work through all ten questions and the full commented code is written for you at the end.</p>
     </div>
 
     <div class="composer-wrap">
@@ -709,13 +746,14 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
         </div>
 
         <div class="composer-bar">
-          <div class="modes" role="group" aria-label="Assistant mode">
-            <button type="button" class="mode active" data-mode="socratic" title="Guides you with questions instead of giving the answer">Socratic</button>
-            <button type="button" class="mode" data-mode="build" title="Gives a complete solution with the reasoning">Build</button>
-            <button type="button" class="mode" data-mode="ask" title="Short answers, no project plan">Ask</button>
+          <div class="modes" id="mode-buttons" role="group" aria-label="Assistant mode" hidden>
+            <button type="button" class="mode active" data-mode="socratic">Socratic</button>
+            <button type="button" class="mode" data-mode="build">Build</button>
+            <button type="button" class="mode" data-mode="ask">Ask</button>
           </div>
           <span class="spacer"></span>
           <div class="tool-btns">
+            <button type="button" class="btn tiny ghost" data-drawer="review">My answers</button>
             <button type="button" class="btn tiny ghost" data-drawer="serial">Serial monitor</button>
             <button type="button" class="btn tiny ghost" data-drawer="diagram">Diagram</button>
             <button type="button" class="btn tiny ghost" data-drawer="parts">Part list</button>
@@ -759,6 +797,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
         <button type="button" class="drawer-tab" role="tab" data-view="diagram">Diagram</button>
         <button type="button" class="drawer-tab" role="tab" data-view="parts">Parts</button>
         <button type="button" class="drawer-tab" role="tab" data-view="checks">Checks</button>
+        <button type="button" class="drawer-tab" role="tab" data-view="review">My answers</button>
         <button type="button" class="drawer-tab" role="tab" data-view="board">Board</button>
         <button type="button" class="drawer-tab" role="tab" data-view="serial">Serial</button>
       </div>
@@ -767,6 +806,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
         <div class="drawer-view" id="dv-diagram"></div>
         <div class="drawer-view" id="dv-parts"></div>
         <div class="drawer-view" id="dv-checks"></div>
+        <div class="drawer-view" id="dv-review"></div>
         <div class="drawer-view" id="dv-board"></div>
         <div class="drawer-view" id="dv-serial">
           <div class="row wrap" style="margin-bottom:10px">
@@ -861,17 +901,25 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
       <span class="field-help" id="key-result" aria-live="polite"></span>
     </div>
 
-    <fieldset>
-      <legend>Learning</legend>
+    <fieldset id="teacher-controls">
+      <legend>Teacher controls</legend>
+      <p class="field-help">Students do not see these. There are no mode buttons above the message box,
+        so whatever you set here is what the class gets.</p>
       <label class="field">
-        <span class="field-label">Mode for new chats</span>
+        <span class="field-label">Mode</span>
         <select id="set-mode">
-          <option value="socratic">Socratic, guides with questions</option>
-          <option value="build">Build, gives full solutions</option>
+          <option value="socratic">Socratic, ten questions then the code</option>
+          <option value="build">Build, gives full solutions straight away</option>
           <option value="ask">Ask, short answers only</option>
         </select>
-        <span class="field-help">This also switches the chat you have open. The buttons above the message box override it any time.</span>
+        <span class="field-help">Socratic is the default. It asks ten questions, one at a time, and only writes
+          the full program once the learner has answered all ten. There is no Show solution shortcut.</span>
       </label>
+      <label class="inline-check">
+        <input type="checkbox" id="set-mode-buttons">
+        <span>Let students switch mode themselves</span>
+      </label>
+      <span class="field-help">Off by default. Turning this on puts Socratic, Build and Ask buttons above the message box.</span>
     </fieldset>
 
     <fieldset>
@@ -929,7 +977,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
 
     <h3>The three modes</h3>
     <ul class="dots">
-      <li><b>Socratic</b> is the default. It tests what you understand: mostly multiple choice questions that ask you to predict what will happen, plus open questions in your own words. Get one wrong and it explains the specific misunderstanding and asks again. Hints get stronger each time you press, and the solution stays locked until you have made a real attempt.</li>
+      <li><b>Socratic</b> is what you get unless your teacher changes it. Ten questions, one at a time. Answer all ten and the full commented program is written for you, built on your own answers. There is no way to skip to the code, and that is the point.</li>
       <li><b>Build</b> gives the complete solution with the reasoning and testing steps.</li>
       <li><b>Ask</b> is for quick questions with no project plan attached.</li>
     </ul>
@@ -997,8 +1045,13 @@ var GEMINI = {
 /* Turn features on and off without touching the rest of the code. */
 var FEATURES = {
   serialMonitor: false,   // Web Serial panel. Hidden for now.
-  modeInSettings: false,  // mode dropdown in Settings. Off, so Socratic is simply the default.
-  showAllBoards: false    // true shows every board profile, not just the five in use
+  showAllBoards: false,   // true shows every board profile, not just the five in use
+  /* How many of the ten questions must be answered before the full program is
+     written. Set to 10 so a learner cannot skip to the code. */
+  questionsBeforeCode: 10,
+  /* After this many tries on the same question, accept it and move on, so a
+     learner cannot get stuck in a loop on one idea. */
+  maxTriesPerQuestion: 3
 };
 
 var KEYS = {
@@ -1033,7 +1086,10 @@ var EMPTY = {
   debuggingSteps: [], reflectionQuestion: '', extensionChallenge: '',
   /* Socratic check. quizType is "mcq" or "open". quizAnswer is the number of
      the correct option, counting from 1. quizWhy explains why it is correct. */
-  quizQuestion: '', quizType: '', quizOptions: [], quizAnswer: '', quizWhy: ''
+  quizQuestion: '', quizType: '', quizOptions: [], quizAnswer: '', quizWhy: '',
+  /* Your verdict on the answer the learner just gave: correct, partly, wrong,
+     or none when they did not answer (for example they asked something back). */
+  answerVerdict: '', answerFeedback: ''
 };
 
 /* Board photos, downscaled and embedded so the app stays one file and works offline. */
@@ -1598,7 +1654,8 @@ function writeLS(key, value) {
 }
 
 var DEFAULT_SETTINGS = {
-  model: '', mode: 'socratic', reduceMotion: false, useMonaco: true, fontScale: 1
+  model: '', mode: 'socratic', reduceMotion: false, useMonaco: true, fontScale: 1,
+  modeButtons: false   // teacher setting: show the mode buttons to students
 };
 
 function getSettings() {
@@ -1629,7 +1686,7 @@ function newChat(over) {
     level: 'beginner', mode: s.mode, rules: '',
     files: [{ name: LANGS[lang].file, content: '' }], activeFile: 0,
     messages: [], last: null,
-    guide: { step: 0, hints: 0, attempts: 0, revealed: false },
+    guide: { step: 0, hints: 0, attempts: 0, tries: 0, revealed: false, answers: [], finalSent: false },
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   };
   if (over) for (var k in over) chat[k] = over[k];
@@ -1965,9 +2022,37 @@ function systemInstruction(ctx) {
   parts.push('- ' + (LEVEL_RULES[ctx.level] || LEVEL_RULES.beginner).join('\n- '));
   parts.push('');
 
-  if (ctx.mode === 'socratic') {
+  if (ctx.mode === 'socratic' && ctx.finalSolution) {
+    parts.push('THE LEARNER HAS NOW ANSWERED ALL TEN QUESTIONS. Write the complete solution.');
+    parts.push('Build it on THEIR OWN ANSWERS, which are listed below. Where their answer decided something, say so:');
+    parts.push('for example "you said the light should stay on for 20 seconds, so that is the number in the timer".');
+    parts.push('Fill every field: "plan", "parts", "pins", "code", "explanation", "wiringSteps", "safetyWarnings", "testSteps", "debuggingSteps".');
+    parts.push('The comments in the code matter most of all here. This is the moment the learner reads code for the first time.');
+    parts.push('End with "reflectionQuestion" asking them to explain one part back in their own words.');
+    parts.push('Leave every quiz field empty. Set "assistantMode" to "socratic".');
+    parts.push('');
+    parts.push('THE LEARNER\'S OWN ANSWERS, in order:');
+    parts.push(ctx.answerLog || '(none recorded)');
+  } else if (ctx.mode === 'socratic') {
     parts.push('SOCRATIC MODE IS ON. Your job is to TEST WHAT THE LEARNER UNDERSTANDS, not to explain at them.');
-    parts.push('Do not give the finished solution. Leave "code" empty unless the learner asked for the solution or has made a genuine attempt you can build on.');
+    parts.push('NEVER give the finished solution and NEVER put anything in "code". There is no way for the learner to skip ahead, ');
+    parts.push('and they do not want one. The full program is written for them automatically once they have answered all ten questions.');
+    parts.push('');
+    parts.push('THIS IS QUESTION ' + (ctx.stepNumber || 1) + ' OF ' + (ctx.stepTotal || 10) + '. It must test this idea: ' +
+      (ctx.stepLabel || 'Trigger') + ' - ' + (ctx.stepQuestion || 'What should trigger the system?'));
+    parts.push('Ask about that idea, in the context of the project the learner described. Do not skip ahead to a later idea.');
+    if (ctx.triesOnStep >= 1) {
+      parts.push('The learner has already had ' + ctx.triesOnStep + ' go at this one. Come at it from a different angle and make it easier.');
+    }
+    parts.push('');
+    parts.push('FIRST, grade the answer the learner just gave, using "answerVerdict":');
+    parts.push('  "correct" - they got the idea. Say briefly why it is right.');
+    parts.push('  "partly"  - the right shape but something is missing or muddled.');
+    parts.push('  "wrong"   - they have a misunderstanding. Name it specifically.');
+    parts.push('  "none"    - they did not answer. They asked you something, or this is the first question.');
+    parts.push('Put your reasoning in "answerFeedback", one or two sentences, and also in "understanding" so they read it.');
+    parts.push('Being wrong is how this is meant to work. Never make the learner feel bad about it.');
+    parts.push('');
     parts.push('Ask exactly ONE question per reply. Never more than one.');
     parts.push('');
     parts.push('EVERY reply must contain a question the learner has to answer. Use "quizQuestion" for it, and pick the type:');
@@ -1985,13 +2070,14 @@ function systemInstruction(ctx) {
     parts.push('  "describe the input, the process and the output for your project" or "what do you want it to do when nobody has moved for a minute?".');
     parts.push('  Leave "quizOptions" empty.');
     parts.push('');
-    parts.push('Grade the previous answer BEFORE asking the next question:');
-    parts.push('  - Correct: say so in "understanding", say briefly why it is right, then move to the next idea.');
-    parts.push('  - Wrong or partly right: say what they got right first, then correct the misunderstanding in one or two sentences, then ask a related question at the same point. Do not move on yet.');
-    parts.push('  - Never shame the learner. Being wrong is how this is supposed to work.');
+    parts.push('The learner may also ask you a clarifying question, such as what a component does or what an input is.');
+    parts.push('Answer it in "understanding", set "answerVerdict" to "none", and still end with your own question for this step.');
     parts.push('');
-    parts.push('The learner may also ask you clarifying questions such as what a component does or what an input is. Answer those in "understanding", then still end with your own question.');
-    parts.push('Start by pinning down the input, the process and the output. Only then go near pins and code.');
+    parts.push('ACCURACY MATTERS MORE THAN ANYTHING HERE. Every question and answer is saved for the learner to revise from.');
+    parts.push('  - "quizAnswer" must point at an option that is genuinely, checkably correct for THIS board.');
+    parts.push('  - Never write a question with two defensible answers, or one where the answer depends on a detail you did not give.');
+    parts.push('  - "quizWhy" must be true on its own, and must still make sense read weeks later with no other context.');
+    parts.push('  - If you are not certain of a fact, do not build a question on it. Ask about something you are certain of.');
     parts.push('Use "plan" only for steps the learner has already worked out themselves.');
     parts.push('Set "assistantMode" to "socratic".');
   } else if (ctx.mode === 'ask') {
@@ -2992,6 +3078,86 @@ function renderResponse(r) {
   }
 }
 
+/* ══════════════════════════════════════════════ the answer record ══ */
+/* Everything the learner is asked and everything they answer is stored on the
+   chat, word for word, so the My answers panel is a true record and not a
+   reconstruction. */
+
+function recordAnswer(rec) {
+  if (!S.chat.guide.answers) S.chat.guide.answers = [];
+  S.chat.guide.answers.push(rec);
+  save();
+  renderReview();
+}
+
+function lastOpenRecord() {
+  var a = S.chat.guide.answers || [], i;
+  for (i = a.length - 1; i >= 0; i--) if (a[i].type === 'open' && a[i].chosen === null) return a[i];
+  return null;
+}
+
+function renderReview() {
+  var a = (S.chat.guide && S.chat.guide.answers) || [], out = '', i, r, mark, k;
+  if (!a.length) {
+    $('#dv-review').innerHTML = '<p class="muted">Your questions and answers are saved here as you go, ' +
+      'so you can look back over them later or ask why an answer was right.</p>';
+    return;
+  }
+  out += '<div class="callout info"><div class="callout-title" data-icon="i">Your record</div>' +
+    '<div>Everything you were asked, what you answered and why. Press Ask about this on any of them ' +
+    'and the assistant will go over it again.</div></div>';
+
+  for (i = 0; i < a.length; i++) {
+    r = a[i];
+    mark = r.correct === true ? 'ok' : r.correct === false ? 'err' : 'neutral';
+    out += '<div class="rec rec-' + mark + '">' +
+      '<div class="rec-head"><span class="rec-step">' + esc(r.label || ('Question ' + (i + 1))) + '</span>' +
+      '<span class="rec-mark ' + mark + '">' +
+        (r.correct === true ? 'Correct' : r.correct === false ? 'Not quite' : 'Answered') + '</span></div>' +
+      '<div class="rec-q">' + esc(r.question) + '</div>';
+
+    if (r.options && r.options.length) {
+      out += '<ul class="rec-opts">';
+      for (k = 0; k < r.options.length; k++) {
+        var cls = '';
+        if (k === r.answerIndex) cls = 'right';
+        if (k === r.chosenIndex && k !== r.answerIndex) cls = 'wrong';
+        out += '<li class="' + cls + '">' + String.fromCharCode(65 + k) + '. ' + esc(r.options[k]) +
+          (k === r.chosenIndex ? ' <em>(you)</em>' : '') +
+          (k === r.answerIndex ? ' <em>(correct)</em>' : '') + '</li>';
+      }
+      out += '</ul>';
+    } else if (r.chosen) {
+      out += '<div class="rec-yours"><b>You said:</b> ' + esc(r.chosen) + '</div>';
+    }
+
+    if (r.why) out += '<div class="rec-why">' + esc(r.why) + '</div>';
+    out += '<button type="button" class="btn tiny ghost" data-recask="' + i + '">Ask about this</button></div>';
+  }
+  $('#dv-review').innerHTML = out;
+}
+
+function askAboutRecord(i) {
+  var r = (S.chat.guide.answers || [])[i];
+  if (!r) return;
+  var msg = 'Go back over this question with me.\n\nQuestion: ' + r.question;
+  if (r.options && r.options.length) {
+    msg += '\nOptions: ' + r.options.join(' / ');
+    if (r.answerIndex >= 0) msg += '\nThe correct answer was: ' + r.options[r.answerIndex];
+    if (r.chosenIndex >= 0) msg += '\nI answered: ' + r.options[r.chosenIndex];
+  } else if (r.chosen) {
+    msg += '\nI answered: ' + r.chosen;
+  }
+  closeDrawer();
+  send(msg, {
+    note: 'The learner is revising an earlier question, not answering a new one. Explain the idea behind ' +
+      'that question and why the answer is what it is, in a few sentences they could read on their own. ' +
+      'Set "answerVerdict" to "none" and do NOT count this as progress. ' +
+      'Then ask again the question for the step they are currently on.',
+    attempt: false
+  });
+}
+
 /* ══════════════════════════════════════════════════════════ quizzes ══ */
 /* Socratic mode ends most replies with a question. Multiple choice ones are
    graded here so the learner gets an answer straight away, then the result is
@@ -3011,6 +3177,9 @@ function correctIndex(r) {
 function renderQuiz(r) {
   var isMcq = r.quizType === 'mcq' && r.quizOptions.length >= 2;
   var answer = isMcq ? correctIndex(r) : -1;
+  /* If the stated answer does not match any option we cannot grade it honestly,
+     so it becomes an open question rather than teaching something wrong. */
+  if (isMcq && answer < 0) isMcq = false;
   var html = '<div class="quiz"><div class="quiz-q">' + esc(r.quizQuestion) + '</div>';
   var i;
 
@@ -3028,7 +3197,15 @@ function renderQuiz(r) {
   html += '</div>';
 
   var node = addMsg('assistant', html);
-  if (!isMcq) return node;
+  var step = guideStep(S.chat.guide);
+
+  if (!isMcq) {
+    /* open question: the record is completed when they type their answer */
+    recordAnswer({ label: 'Question ' + (S.chat.guide.step + 1) + ' of ' + STEPS.length + ' \u00b7 ' + step.label,
+      stepId: step.id, question: r.quizQuestion, type: 'open', options: r.quizOptions.slice(),
+      answerIndex: -1, chosenIndex: -1, chosen: null, correct: null, why: r.quizWhy || '' });
+    return node;
+  }
 
   var box = node.querySelector('.quiz');
   box.addEventListener('click', function (e) {
@@ -3049,6 +3226,11 @@ function renderQuiz(r) {
     fb.hidden = false;
 
     S.chat.guide.attempts++;
+    recordAnswer({ label: 'Question ' + (S.chat.guide.step + 1) + ' of ' + STEPS.length + ' \u00b7 ' + step.label,
+      stepId: step.id, question: r.quizQuestion, type: 'mcq', options: r.quizOptions.slice(),
+      answerIndex: answer, chosenIndex: chosen, chosen: r.quizOptions[chosen],
+      correct: right, why: r.quizWhy || '' });
+
     send('I chose ' + String.fromCharCode(65 + chosen) + ': ' + r.quizOptions[chosen], {
       note: 'The learner answered the multiple choice question and was ' + (right ? 'CORRECT' : 'WRONG') +
         '. They have already been shown whether they were right and the reason, so do not repeat it at length. ' +
@@ -3063,20 +3245,93 @@ function renderQuiz(r) {
 
 /* ═══════════════════════════════════════════════════════════ guided ══ */
 
+/* Progress is decided by the verdict the assistant gives on the learner's last
+   answer, not by how many messages have gone past. A wrong answer stays on the
+   same question, so ten answered really does mean ten understood. */
+function advanceGuide(chat, r) {
+  var g = chat.guide, verdict = String(r.answerVerdict || '').toLowerCase(), moved = false;
+
+  /* fill in the open question they just answered */
+  if (verdict === 'correct' || verdict === 'partly' || verdict === 'wrong') {
+    var open = null, a = g.answers || [], i;
+    for (i = a.length - 1; i >= 0; i--) if (a[i].type === 'open' && a[i].chosen === null) { open = a[i]; break; }
+    if (open) {
+      var mine = chat.messages, j;
+      for (j = mine.length - 1; j >= 0; j--) if (mine[j].role === 'user') { open.chosen = mine[j].text; break; }
+      open.correct = (verdict === 'correct');
+      if (r.answerFeedback) open.why = r.answerFeedback;
+    }
+  }
+
+  if (verdict === 'correct') { moved = true; }
+  else if (verdict === 'partly' || verdict === 'wrong') {
+    g.tries = (g.tries || 0) + 1;
+    /* do not let one idea trap a learner forever */
+    if (g.tries >= FEATURES.maxTriesPerQuestion) moved = true;
+  }
+
+  if (moved) {
+    g.step = Math.min((g.step || 0) + 1, STEPS.length);
+    g.tries = 0;
+    g.hints = 0;
+  }
+  return moved;
+}
+
+/* Count of questions actually answered, however they were answered. */
+function answeredCount(chat) {
+  var a = (chat.guide && chat.guide.answers) || [], n = 0, i;
+  for (i = 0; i < a.length; i++) if (a[i].chosen !== null && a[i].chosen !== undefined) n++;
+  return n;
+}
+
+function guideComplete(chat) {
+  return (chat.guide.step || 0) >= FEATURES.questionsBeforeCode;
+}
+
+/* Once all ten are done, the full program is written automatically. */
+function maybeFinalSolution() {
+  var g = S.chat.guide;
+  if (S.chat.mode !== 'socratic' || g.finalSent || !guideComplete(S.chat)) return false;
+  g.finalSent = true;
+  save();
+  addMsg('system', 'That is all ten questions. Writing the full program from your own answers now.');
+  send('I have answered all ten questions. Please write the complete program.', {
+    note: 'FINAL SOLUTION', attempt: false, silent: true, finalSolution: true
+  });
+  return true;
+}
+
 function updateGuide() {
-  var on = S.chat.mode === 'socratic', p = guideProgress(S.chat.guide);
+  var on = S.chat.mode === 'socratic', g = S.chat.guide;
+  var total = FEATURES.questionsBeforeCode;
+  var done = Math.min(g.step || 0, total);
+  var pct = Math.round((done / total) * 100);
+  var complete = guideComplete(S.chat);
+
   $('#guide-bar').hidden = !on;
-  $('#guide-step').textContent = 'Step ' + p.step + ' of ' + p.total + ' \u00b7 ' + p.label;
-  $('#guide-fill').style.width = p.percent + '%';
-  $('#guide-fill').parentNode.setAttribute('aria-valuenow', String(p.percent));
+  if (on) {
+    $('#guide-step').textContent = complete
+      ? 'All ' + total + ' questions answered'
+      : 'Question ' + (done + 1) + ' of ' + total + ' \u00b7 ' + guideStep(g).label;
+    $('#guide-fill').style.width = pct + '%';
+    $('#guide-fill').parentNode.setAttribute('aria-valuenow', String(pct));
+    $('#guide-count').textContent = answeredCount(S.chat) + ' answered';
+    $('#guide-note').textContent = complete
+      ? 'The full commented program is in the Code panel, written from your answers.'
+      : 'Answer all ' + total + ' questions and the full commented code is written for you at the end.';
+  }
   $$('.mode[data-mode]').forEach(function (b) {
     b.classList.toggle('active', b.getAttribute('data-mode') === S.chat.mode);
   });
+  renderReview();
 }
 
 function setMode(mode) {
   S.chat.mode = mode;
-  if (mode === 'socratic') { S.chat.guide = { step: 0, hints: 0, attempts: 0, revealed: false }; }
+  if (mode === 'socratic') {
+    S.chat.guide = { step: 0, hints: 0, attempts: 0, tries: 0, revealed: false, answers: [], finalSent: false };
+  }
   updateGuide();
   if (!S.chat.messages.length) renderChat();
   save();
@@ -3084,14 +3339,27 @@ function setMode(mode) {
 
 function doGuide(action) {
   var built;
-  if (action === 'solution' && S.chat.guide.attempts === 0) {
-    addMsg('system', 'Have a go first, even a rough one. Type what you think should happen, then ask again.');
-    $('#msg-input').focus();
+  if (action === 'solution' || action === 'step') {
+    /* no shortcuts to the code in Socratic mode */
+    addMsg('system', 'The full program is written for you once you have answered all ten questions. ' +
+      'Use a hint if you are stuck on this one.');
     return;
   }
   built = guideAction(action, S.chat.guide, S.chat.level);
   send(built.text, { note: built.note, attempt: false });
   updateGuide();
+}
+
+function answerLogText(chat) {
+  var a = (chat.guide && chat.guide.answers) || [], out = [], i, r;
+  for (i = 0; i < a.length; i++) {
+    r = a[i];
+    if (r.chosen === null || r.chosen === undefined) continue;
+    out.push((i + 1) + '. ' + r.label + '\n   Asked: ' + r.question +
+      '\n   They answered: ' + r.chosen +
+      (r.correct === true ? '  (correct)' : r.correct === false ? '  (they got this one wrong)' : ''));
+  }
+  return out.join('\n');
 }
 
 /* ═════════════════════════════════════════════════════════════ send ══ */
@@ -3126,13 +3394,21 @@ function send(text, opts) {
   renderChatList();
 
   var typing = showTyping();
+  var step = guideStep(owner.guide);
   var ctx = {
     apiKey: S.apiKey, model: S.settings.model || GEMINI.model,
     boardId: owner.board, language: owner.language, level: owner.level,
     mode: owner.mode, rules: owner.rules,
     history: owner.messages.slice(0, -1), image: S.image,
     code: owner.mode === 'ask' ? '' : getCode(),
-    prompt: opts.note ? trimmed + '\n\n[Instruction to the assistant: ' + opts.note + ']' : trimmed
+    stepNumber: Math.min((owner.guide.step || 0) + 1, STEPS.length),
+    stepTotal: FEATURES.questionsBeforeCode,
+    stepLabel: step.label, stepQuestion: step.q,
+    triesOnStep: owner.guide.tries || 0,
+    finalSolution: !!opts.finalSolution,
+    answerLog: opts.finalSolution ? answerLogText(owner) : '',
+    prompt: opts.note && !opts.finalSolution
+      ? trimmed + '\n\n[Instruction to the assistant: ' + opts.note + ']' : trimmed
   };
 
   function dropTyping() { if (typing && typing.parentNode) typing.parentNode.removeChild(typing); }
@@ -3141,10 +3417,7 @@ function send(text, opts) {
     dropTyping();
     owner.last = r;
     owner.messages.push({ role: 'assistant', text: r.understanding || 'Generated a project plan.' });
-    if (owner.mode === 'socratic' && (r.questions.length || r.quizQuestion)) {
-      if (owner.guide.step < STEPS.length - 1) owner.guide.step++;
-      owner.guide.hints = 0;
-    }
+    if (owner.mode === 'socratic') advanceGuide(owner, r);
     saveChat(owner);
     if (!mine()) { renderChatList(); return; }   /* answer belongs to another chat */
 
@@ -3176,6 +3449,8 @@ function send(text, opts) {
     clearImage();
     save();
     renderChatList();
+    /* fired here, not in the handler above, because the turn is only free now */
+    if (mine()) maybeFinalSolution();
   });
 }
 
@@ -3350,6 +3625,7 @@ function openSettings() {
   var u = storageUsage(), html = '', i;
   $('#set-key').value = S.apiKey;
   if ($('#set-mode')) $('#set-mode').value = S.settings.mode;
+  if ($('#set-mode-buttons')) $('#set-mode-buttons').checked = !!S.settings.modeButtons;
   $('#set-motion').checked = !!S.settings.reduceMotion;
   $('#set-monaco').checked = !!S.settings.useMonaco;
   $('#set-font').value = String(S.settings.fontScale);
@@ -3403,7 +3679,14 @@ function save() {
 function applyChat(chat) {
   S.chat = chat;
   resetTransient();
-  if (!S.chat.guide) S.chat.guide = { step: 0, hints: 0, attempts: 0, revealed: false };
+  if (!S.chat.guide) S.chat.guide = {};
+  var g = S.chat.guide;
+  if (typeof g.step !== 'number') g.step = 0;
+  if (typeof g.hints !== 'number') g.hints = 0;
+  if (typeof g.attempts !== 'number') g.attempts = 0;
+  if (typeof g.tries !== 'number') g.tries = 0;
+  if (!g.answers) g.answers = [];
+  if (typeof g.finalSent !== 'boolean') g.finalSent = false;
   if (!S.chat.files || !S.chat.files.length) S.chat.files = [{ name: LANGS[S.chat.language].file, content: '' }];
   if (S.chat.activeFile >= S.chat.files.length) S.chat.activeFile = 0;
 
@@ -3558,6 +3841,10 @@ function wire() {
   });
 
   /* drawer */
+  $('#dv-review').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-recask]') : null;
+    if (b) askAboutRecord(Number(b.getAttribute('data-recask')));
+  });
   $$('[data-drawer]').forEach(function (b) {
     b.addEventListener('click', function () { openDrawer(b.getAttribute('data-drawer')); });
   });
@@ -3620,7 +3907,17 @@ function wire() {
   if ($('#set-mode')) $('#set-mode').addEventListener('change', function (e) {
     S.settings = saveSettings({ mode: e.target.value });
     setMode(e.target.value);
-    toast('New chats will start in ' + e.target.value + ' mode');
+    toast('Mode set to ' + e.target.value);
+  });
+  if ($('#set-mode-buttons')) $('#set-mode-buttons').addEventListener('change', function (e) {
+    S.settings = saveSettings({ modeButtons: e.target.checked });
+    applyFeatures();
+    toast(e.target.checked ? 'Students can switch mode' : 'Mode buttons hidden from students');
+  });
+  $('#btn-teacher').addEventListener('click', function () {
+    openSettings();
+    var fs = $('#teacher-controls');
+    if (fs && fs.scrollIntoView) fs.scrollIntoView({ block: 'center' });
   });
   $('#set-motion').addEventListener('change', function (e) {
     S.settings = saveSettings({ reduceMotion: e.target.checked }); applySettings();
@@ -3692,15 +3989,14 @@ function applyFeatures() {
     el = $('#dv-serial'); if (el) el.parentNode.removeChild(el);
     el = $('#pill-serial'); if (el) el.parentNode.removeChild(el);
   }
-  if (!FEATURES.modeInSettings) {
-    el = $('#set-mode');
-    if (el) { el = el.closest('fieldset'); if (el) el.parentNode.removeChild(el); }
-  }
+  var mb = $('#mode-buttons');
+  if (mb) mb.hidden = !S.settings.modeButtons;
 }
 
 function init() {
   var existing = getActiveChat(), firstRun = !existing;
 
+  S.settings = getSettings();
   applyFeatures();
   wireOnboard();
   applyChat(existing || newChat({ board: 'arduino-uno' }));
