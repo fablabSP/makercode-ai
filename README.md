@@ -125,11 +125,32 @@ delete `hidden: true` from its `reg({ ... })` entry.
 ### Breadboard versus expansion board
 
 Each board says how it is normally wired, and that goes into the prompt so the
-advice matches. The Super Mini is the odd one out: it sits on an expansion
-board, and there is no public pinout drawing for that board. The assistant is
-told never to invent expansion board labels, to give every connection as the
-GPIO number printed on the Super Mini itself, and to tell the learner to trace
-each expansion board socket back to that GPIO before wiring.
+advice matches.
+
+The ESP32-C3 Super Mini is the odd one out: it sits on an expansion board, and
+that board's layout is now recorded properly, read off the hardware:
+
+| | |
+| --- | --- |
+| Left bank, rail VCC2 | 3-pin headers for GPIO 5, 6, 7, 8, 9, 10, 20, 21 |
+| Right bank, rail VCC1 | 3-pin headers for GPIO 4, 3, 2, 1, 0 |
+| Each header | S, then VCC, then GND. A 3-wire module plugs straight in. |
+| Screw terminals | 5V, GND, 3V3 |
+| Battery | JST connector with a BAT-LED charge indicator |
+
+Two traps that come out of this, and both are now in the prompt and the pin
+checker:
+
+- **There is no 5 V on the 3-pin headers.** VCC1 and VCC2 are the only supplies
+  a module can get from a header. A 5 V sensor has to come off the blue screw
+  terminal, and its output still must not go straight to a GPIO.
+- **VCC1 and VCC2 are solder jumpers**, each selecting BAT or 3V3. Set to BAT,
+  the header VCC is raw battery voltage, up to about 4.2 V on a full cell, not a
+  regulated 3.3 V. Worth checking before a class plugs anything in.
+
+Wiring advice for this board is given as which header to use, for example "plug
+the sensor into the 3-pin header marked 7 in the left bank", rather than as
+breadboard rows.
 
 ## The three modes
 
@@ -192,56 +213,48 @@ is worse than no record:
 
 ## The circuit drawing
 
-The Diagram panel draws the circuit from the pin table: the board on the left,
-components on the right, a red board power rail across the top and a grey ground
-rail across the bottom. Signal wires are coloured and labelled at both ends with
-the component pin and the board pin.
+Up to three views of the same wiring, toggled in the Diagram panel.
+
+**Wiring map.** The board on the left showing only the pins actually in use,
+components on the right drawn as real parts with named pin pads, and every wire
+in its own routing lane so no wire crosses a component body. Colour-coded and
+labelled at both ends, so it still reads printed in black and white.
+
+**Expansion board.** For boards that plug into a carrier, this draws the carrier
+itself: both banks of 3-pin headers with their GPIO numbers, the headers this
+project uses highlighted and named, and the VCC rail each bank sits on. It
+answers the only question a student has at that moment, which is where to plug
+the thing in.
+
+**Breadboard.** The same circuit laid out on a half-size breadboard, with power
+and ground rails, the controller alongside, and jumpers into columns. A part pin
+and its jumper go into the same column but different rows, which is how a
+breadboard actually works: one column is one node.
 
 Two details that matter more than they look:
 
-- Anything the model marks as needing its own supply gets a **separate amber
-  rail**, never the board power rail, with a dashed line showing that the two
-  grounds still have to be joined. A drawing that quietly told a student to run
-  a Neopixel strip off the Arduino 5V pin would undo the safety warnings.
+- Anything needing its own supply is drawn as a **dashed amber wire from a
+  separate stub**, never from a board pin. A drawing that quietly told a student
+  to run a Neopixel ring off the board's 5V pin would undo the safety warnings.
 - A wire to a pin that does not exist on the selected board is drawn **dashed in
-  red** with a question mark.
+  red**.
 
-Download drawing saves it as an SVG, so it can go into a worksheet or a report.
+Download drawing saves either view as SVG, for worksheets or reports.
 
 It is a wiring guide, not a schematic, and it is not to scale.
 
-## Opening the circuit in Wokwi
+### The artwork is original
 
-The drawing in this app is a wiring map: clear, honest about what it does not
-know, and generated offline. It is not a breadboard photo, and it does not
-simulate.
+Every component is drawn from scratch in code. That is deliberate. Fritzing's
+parts library is the obvious source for realistic artwork, but it is licensed
+CC BY-SA 3.0: share-alike, so building it into this app would force the whole
+project to change licence and carry attribution. Some community-contributed
+Fritzing parts are BY-NC-SA, which would also bar commercial use. Drawing the
+parts keeps the project MIT with no attribution burden.
 
-For that, the Diagram panel exports a Wokwi `diagram.json`. Wokwi draws the real
-components on a breadboard, lets you drag them around, and runs your code.
-
-Press Open in Wokwi. The diagram is copied to your clipboard and Wokwi opens in
-a new tab. Paste it into the diagram.json tab there, paste your code into the
-code tab, and press play. Copy and Download buttons are there too if the
-clipboard is blocked.
-
-Board mapping:
-
-| Board here | Wokwi part |
-| --- | --- |
-| Arduino UNO | `wokwi-arduino-uno` |
-| Arduino Nano | `wokwi-arduino-nano` |
-| ESP32-WROOM-32U DevKitC | `wokwi-esp32-devkit-v1` |
-| ESP32-C3 Super Mini | `board-esp32-c3-devkitm-1`, the nearest C3 board |
-| ESP32-CAM | not supported by Wokwi |
-
-Components map to the real Wokwi parts: `wokwi-pir-motion-sensor`,
-`wokwi-neopixel`, `wokwi-servo`, `wokwi-hc-sr04`, `wokwi-potentiometer`,
-`wokwi-pushbutton`, `wokwi-buzzer`, `wokwi-led`, `board-ssd1306` and others.
-
-Anything that cannot be mapped is listed in the panel rather than dropped, so
-you know exactly what to wire by hand once Wokwi opens. A part with no Wokwi
-equivalent, and anything on a separate supply, is always listed there, since
-Wokwi has no second power supply to connect to.
+Adding a part means one entry in `PART_ART`: a body drawn with SVG primitives
+and named pin offsets from the top-left corner. Pins sit on the bottom edge so
+wires always approach from below.
 
 ## The pin checker
 
